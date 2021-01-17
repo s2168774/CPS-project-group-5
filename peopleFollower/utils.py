@@ -17,6 +17,9 @@ FOCAL_LENGTH = (PIXEL_WIDTH_AT_REAL_DIST * REAL_DISTANCE) / REAL_WIDTH
 def findCameraDistance(pixelWidth) :
 	return (REAL_WIDTH * FOCAL_LENGTH) / pixelWidth
 
+def rectArea(width, height) :
+	return width * height
+
 def movingAverage(measurement) :
 	cfg.distMeasurements.append(measurement)
 	if len(cfg.distMeasurements) > cfg.movingAverageWindowSize :
