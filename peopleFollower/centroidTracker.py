@@ -5,6 +5,7 @@
 
 from scipy.spatial import distance as dist
 from collections import OrderedDict
+from utils import rectArea
 import numpy as np
 
 # This tracker will remember objects that were recognized by color tresholding
@@ -34,12 +35,14 @@ class CentroidTracker() :
 				
 			return self.objects
 		# initialize the container for input centroids
-		inputCentroids = np.zeros((len(rects),2), dtype="int")
+		inputCentroids = np.zeros((len(rects),3), dtype="int")
 
 		for (i, (startX, startY, endX, endY)) in enumerate(rects) :
 			centerX = int((startX + endX) / 2.0)
 			centerY = int((startY + endY) / 2.0)
-			inputCentroids[i] = (centerX, centerY)
+
+			area = rectArea((endX - startX), (endY - startY))
+			inputCentroids[i] = (centerX, centerY, area)
 			pass
 
 		if len(self.objects) == 0:
