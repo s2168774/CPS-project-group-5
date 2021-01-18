@@ -13,6 +13,8 @@ from utils import findCameraDistance, positionControl_PID, findCameraDistance, r
 from centroidTracker import CentroidTracker
 from imutils.object_detection import non_max_suppression
 
+from bleCommunication.bleScanner import DeviceScanner
+
 # Initialize PiCamera
 camera = PiCamera()
 camera.resolution = (cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT)
@@ -22,26 +24,37 @@ camera.rotation = 180
 #initialize peopleTracker
 peopleTracker = CentroidTracker()
 
-def nothing(x):
-    pass
+# def nothing(x):
+#     pass
  
-cv2.namedWindow("Trackbars")
+# cv2.namedWindow("Trackbars")
  
 # cv2.createTrackbar("B", "Trackbars", 0, 255, nothing)
 # cv2.createTrackbar("G", "Trackbars", 0, 255, nothing)
 # cv2.createTrackbar("R", "Trackbars", 0, 255, nothing)
 
-rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
+
 
 # Create and start PID controller thread
 controlThread = Thread(target = positionControl_PID)
 controlThread.start()
 print("thread started")
 
+# Handle Bluetooth Low Energy device scan
+deviceScanner = DeviceScanner()
+# deviceScanner.startScan(float("inf"))
+# deviceScanner.showAvilableDevices()
+# TODO get values from scanner thread
+
+deviceScannerThread = Thread(target = deviceScanner.startScan, args=(float("inf")))
+
+rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
+
 #loop through frames continuously
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     image = frame.array
 
+    print(" my device signal strength in dB: ", deviceScanner.rssi)
     # image = imutils.resize(image, width=min(400, image.shape[1]))
 
 
@@ -170,6 +183,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     key = cv2.waitKey(1)
     rawCapture.truncate(0)
     if key == 27:
+        controlThread.join()
+        deviceScannerThread.join()
         cfg.GPG.reset_all()
         camera.close()
         cfg.GPG.stop()

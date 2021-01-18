@@ -25,8 +25,9 @@ correction = 0.0
 
 ## Distance from RSSI parameters START ##
 
-
 ## Distance from RSSI parameters END ##
+
+
 threadStopper = Event()
 
 GPG = easygopigo3.EasyGoPiGo3() # Create an instance of the GoPiGo3 class. GPG will be the GoPiGo3 object.
