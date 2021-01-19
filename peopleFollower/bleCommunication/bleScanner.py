@@ -1,5 +1,5 @@
 from bluepy.btle import Scanner, DefaultDelegate, ScanEntry
-# from ... import config as cfg
+from peopleFollower import config as cfg
 
 from math import isinf
 HEADSET_ADDR = "cc:98:8b:cf:bc:82"
@@ -21,11 +21,11 @@ class ScanDelegate(DefaultDelegate):
 
 
 class DeviceScanner(Scanner) :
-    def __init__(self) :
+    def __init__(self, scanDelegate) :
         Scanner().__init__(self)
-        self.scanDelegate = ScanDelegate()
-        self.scanner = Scanner().withDelegate(self.scanDelegate)
-        self.rssi = self.scanDelegate.rssi
+        # self.scanDelegate = ScanDelegate()
+        self.scanner = Scanner().withDelegate(scanDelegate)
+        self.rssi = scanDelegate.rssi
         self.devices = []
 
     def startScan(self, scanTime=10.0) :
@@ -35,11 +35,11 @@ class DeviceScanner(Scanner) :
             self.scanner.start()
             while True:
                 print ("BLE scan running...")
-                scanner.process()
+                self.scanner.process()
 
-    def showAvilableDevices(self) :
-        self.rssi = self.scanDelegate.rssi
-        print("SCANDELEGATE RSSI", self.scanDelegate.rssi)
+    def showAvilableDevices(self, scanDelegate) :
+        self.rssi = scanDelegate.rssi
+        print("SCANDELEGATE RSSI", scanDelegate.rssi)
         for dev in self.devices:
             print ("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi))
             for (adtype, desc, value) in dev.getScanData():

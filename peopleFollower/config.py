@@ -6,25 +6,42 @@ FRAME_HEIGHT = 480
 
 MAX_SPEED = 200
 
-movingAverageWindowSize = 10
-distMeasurements = []
+distanceMeasurements = []
+horizontalPositions = []
 
-## PID controller parameters START ##
-previousError = 0.0
-integralError = 0.0
-loopFreq = 40
-measurement = 0
-setpoint = FRAME_WIDTH / 2
-leftMotorSpeed = 0
-rightMotorSpeed = 0
-Kp = 0.2
-Kd = 0.01
-Ki = 0.2
-correction = 0.0
-## PID controller parameters END ##
+## horizontal position PID controller parameters START ##
+horizontal_previousError = 0.0
+horizontal_integralError = 0.0
+horizontal_loopFreq = 100
+horizontal_measurement =  FRAME_WIDTH / 2
+horizontal_setpoint = FRAME_WIDTH / 2
+# LeftMotorSpeed = 0
+# rightMotorSpeed = 0
+horizontal_Kp = 0.2
+horizontal_Kd = 0.01
+horizontal_Ki = 0.002
+horizontal_correction = 0.0
+## horizontal position PID controller parameters END ##
+
+## distance PID controller parameters START ##
+distance_previousError = 0.0
+distance_integralError = 0.0
+distance_loopFreq = 40
+distance_measurement = 0
+distance_setpoint = 100
+# leftMotorSpeed = 0
+# rightMotorSpeed = 0
+distance_Kp = 4
+distance_Kd = 0.4
+distance_Ki = 0.08
+distance_correction = 0.0
+## distance PID controller parameters END ##
+
 
 ## Distance from RSSI parameters START ##
+scanTime = float("inf")
 
+rssi = 0
 ## Distance from RSSI parameters END ##
 
 
