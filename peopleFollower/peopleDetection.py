@@ -4,22 +4,20 @@ import imutils
 import time
 import easygopigo3
 import config as cfg
+import bleScanner as ble
 
+# from bleCommunication.bleScanner import DeviceScanner
 from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
-from picamera import PiCamera 
-from utils import findCameraDistance, positionControl_PID, findCameraDistance, rectArea
+
+from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage
 from centroidTracker import CentroidTracker
 from imutils.object_detection import non_max_suppression
-
-from bleCommunication.bleScanner import DeviceScanner
+from wifiScanner import WifiScanner
 
 # Initialize PiCamera
-camera = PiCamera()
-camera.resolution = (cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT)
-camera.framerate = 30
-camera.rotation = 180
+camera = cameraInit()
 
 #initialize peopleTracker
 peopleTracker = CentroidTracker()
@@ -36,17 +34,28 @@ peopleTracker = CentroidTracker()
 
 
 # Create and start PID controller thread
-controlThread = Thread(target = positionControl_PID)
-controlThread.start()
-print("thread started")
+# horizontalPositionControlThread = Thread(target = horizontalPositionControl_PID)
+# horizontalPositionControlThread.start()
+# print("horizontal control thread started")
 
-# Handle Bluetooth Low Energy device scan
-deviceScanner = DeviceScanner()
-# deviceScanner.startScan(float("inf"))
-# deviceScanner.showAvilableDevices()
-# TODO get values from scanner thread
+distanceControlThread = Thread(target = distanceControl_PID)
+distanceControlThread.start()
+print("distance control thread started")
 
-deviceScannerThread = Thread(target = deviceScanner.startScan, args=(float("inf")))
+
+# # Handle Bluetooth Low Energy device scan
+# scanDelegate = ble.ScanDelegate()
+# deviceScanner = ble.DeviceScanner(scanDelegate)
+# # deviceScanner.startScan(float("inf"))
+# deviceScanner.showAvilableDevices(scanDelegate)
+# # TODO get values from scanner thread
+
+# wifiScanner = WifiScanner()
+
+# # deviceScannerThread = Thread(target = wifiScanner.probeRssi)
+# deviceScannerThread = Thread(target = deviceScanner.startScan)
+# deviceScannerThread.start()
+# print("device scanner thread started")
 
 rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
 
@@ -54,10 +63,10 @@ rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     image = frame.array
 
-    print(" my device signal strength in dB: ", deviceScanner.rssi)
+    # print(" my device signal strength in dB: ", scanDelegate.rssi)
     # image = imutils.resize(image, width=min(400, image.shape[1]))
 
-
+    # print(deviceScannerThread.is_alive())
     # Find object in the image
     
     blurred = cv2.GaussianBlur(image, (5, 5), 0)
@@ -67,21 +76,21 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     # B = cv2.getTrackbarPos("B", "Trackbars")
     # G = cv2.getTrackbarPos("G", "Trackbars")
     # R = cv2.getTrackbarPos("R", "Trackbars")
-    B = 95
-    G = 0
-    R = 225
+    B = 50
+    G = 20
+    R = 150
 
     color = np.uint8([[[B, G, R]]])
     hsvColor = cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
-    lowerLimit = np.uint8([hsvColor[0][0][0]-10, 150,150])
-    upperLimit = np.uint8([hsvColor[0][0][0]+10,255,255])
+    lowerLimit = np.uint8([hsvColor[0][0][0]-20, 100,30])
+    upperLimit = np.uint8([hsvColor[0][0][0]+20,255,255])
 
     # Apply Filters START
     kernel = np.ones((15,15),np.uint8)
     mask = cv2.inRange(hsv, lowerLimit, upperLimit)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-    cv2.imshow("mask", mask)
+    # cv2.imshow("mask", mask)
     # Apply Filters END
 
     # Get object contours START
@@ -96,15 +105,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         contoursSorted = contoursSorted[:2]
 
     if len(contours) != 0 :
-        i = 0
         for contour in contoursSorted:
-
             x,y,w,h = cv2.boundingRect(contour)
-            print ("pixel width of object: %d" % w )
-            i += 1
-            # if (w) > 10:
             rects.append([x,y,x+w,y+h])
-        # image = cv2.rectangle(image,(x,y),(x+w,y+h),(0,255,0),2)
         pass
 
         rects = np.array(rects)
@@ -123,9 +126,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         for (objectID, centroid) in objects.items():
             # draw both the ID of the object and the centroid of the
             # object on the output image
-            centerX, centerY, area = centroid
+            centerX, centerY, area, width = centroid
 
-            print("objectID: %d, area: %d " % (objectID, area))
+            # print("objectID: %d, area: %d " % (objectID, area))
             if prevArea < area :
                 maxAreaBboxID = objectID
             prevArea = area
@@ -134,31 +137,47 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
             cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
 
-        print("maxAreaBboxID: ", maxAreaBboxID)
+        # print("maxAreaBboxID: ", maxAreaBboxID)
         if maxAreaBboxID in objects :
             trackedCentroid = objects[maxAreaBboxID]
-            # print(objects[0])
-            # print(trackedCentroid)
             centroidX = trackedCentroid[0]
+            width = trackedCentroid[3]
 
-        startX, startY, endX, endY = pick[0]
+        # startX, startY, endX, endY = pick[0]
+
         # Find and display distance to the object
-
-        estimatedDistanceToObj = findCameraDistance(endX - startX)
-
-        cv2.putText(image, "%.2fcm" % (estimatedDistanceToObj),
-        (image.shape[1] - 200, image.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+        # estimatedDistanceToObj = findCameraDistance(endX - startX)
 
         ###### HANDLE ROBOT MOVEMENT_ START #####
-        cfg.measurement = centroidX
-        print(cfg.measurement)
+        # cfg.horizontal_measurement = centroidX # horizontal position measurement
+        cfg.horizontal_measurement = movingAverage(centroidX, cfg.horizontalPositions, windowSize=5) # horizontal position 
 
-        if estimatedDistanceToObj > 40 :
-            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - cfg.correction)
-            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + cfg.correction)
-        else :
-            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=0)
-            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=0)
+        print("hor_meas", cfg.horizontal_measurement, "centroidX : ", centroidX)
+        # cfg.distance_measurement = movingAverage(findRssiDistance(cfg.rssi), cfg.distanceMeasurements, windowSize=3)
+        # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
+
+        cfg.distance_measurement = movingAverage(findCameraDistance(width), cfg.distanceMeasurements, windowSize=5)
+        # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
+
+
+
+        cv2.putText(image, "%.2fcm" % (cfg.distance_measurement),
+        (image.shape[1] - 200, image.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
+
+        # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction + cfg.distance_correction))
+        # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction + cfg.distance_correction))
+
+        cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.distance_correction))
+        cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED - int(cfg.distance_correction))
+        print("distance correction: ", cfg.distance_correction)
+        print("horizontal_correction: ", cfg.horizontal_correction)
+
+        # if cfg.distance_measurement > 40 :
+        #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - cfg.horizontal_correction)
+        #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + cfg.horizontal_correction)
+        # else :
+        #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=0)
+        #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=0)
             # cfg.MAX_SPEED -= 10
         ## get first object found centroid
         
@@ -183,7 +202,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     key = cv2.waitKey(1)
     rawCapture.truncate(0)
     if key == 27:
-        controlThread.join()
+        horizontalPositionControlThread.join()
+        distanceControlThread.join()
         deviceScannerThread.join()
         cfg.GPG.reset_all()
         camera.close()
