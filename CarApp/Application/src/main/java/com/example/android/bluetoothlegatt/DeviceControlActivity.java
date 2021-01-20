@@ -83,6 +83,8 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
             }
             // Automatically connects to the device upon successful start-up initialization.
             mBluetoothLeService.connect(mDeviceAddress);
+
+            goToMenu();
         }
 
         @Override
@@ -316,20 +318,20 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
 
     /**
      * The new code for the GoPiGo
+     * TODO: finish everything for our own interface and GoPiGo communication
      */
 
 
-    // New variables
+    // New list with variables
     private int destination;
     private ArrayList<Integer> stationArray = new ArrayList<>(Arrays.asList(0));
-
 
 
     /**
      *  General methods
      */
     // When a device is connected:
-    public void goToMenu(View view) {
+    public void goToMenu() {
         setContentView(R.layout.main_menu);
         // Set an default list with locations:
         for (int i = 0; i < 3; i++){
@@ -341,6 +343,25 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     public void returnMenu(View view) {
         setContentView(R.layout.main_menu);
     }
+
+    /**
+     *  Methods for the settings page
+     */
+    public void goToSettings(View view) {
+        setContentView(R.layout.settings);
+    }
+
+    public void changeStations(View view) {
+        // TODO: add method to change the station layout
+    }
+
+    public void searchDevices(View view) {
+        // TODO: add method to change the connected device
+        //What connections/settings should be terminated/changed?
+        onResume();
+    }
+
+
 
     /**
      *  Methods for mode 1: line following
