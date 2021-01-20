@@ -24,7 +24,9 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.le.BluetoothLeScanner;
 import android.bluetooth.le.ScanCallback;
+import android.bluetooth.le.ScanFilter;
 import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -189,12 +191,25 @@ public class DeviceScanActivity extends ListActivity {
                 public void run() {
                     mScanning = false;
                     mBluetoothLeScanner.stopScan(scanCallback);
+                    Toast.makeText(DeviceScanActivity.this,"Scan timeout",Toast.LENGTH_LONG).show();
                     invalidateOptionsMenu();
                 }
             }, SCAN_PERIOD);
 
+            //scan specified devices only with ScanFilter
+            ScanFilter scanFilter =
+                    new ScanFilter.Builder()
+//                            .setServiceUuid(BluetoothLeService.ParcelUuid_HEART_RATE_MEASUREMENT)
+                            .build();
+            List<ScanFilter> scanFilters = new ArrayList<ScanFilter>();
+            scanFilters.add(scanFilter);
+
+            ScanSettings scanSettings =
+                    new ScanSettings.Builder().build();
+
+            mBluetoothLeScanner.startScan(scanFilters, scanSettings, scanCallback);
+
             mScanning = true;
-            mBluetoothLeScanner.startScan(scanCallback);
         } else {
             mScanning = false;
             mBluetoothLeScanner.stopScan(scanCallback);
