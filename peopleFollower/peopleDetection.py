@@ -64,7 +64,7 @@ rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
 #loop through frames continuously
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
     image = frame.array
-
+    startTime = time.time()
     # print(" my device signal strength in dB: ", scanDelegate.rssi)
     # image = imutils.resize(image, width=min(400, image.shape[1]))
 
@@ -125,6 +125,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     if bool(objects):
         maxAreaBboxID = 0
         prevArea = 0
+        eraseIDs = []
         for (objectID, centroid) in objects.items():
             # draw both the ID of the object and the centroid of the
             # object on the output image
@@ -139,7 +140,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
                 cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
             else:
-                del objects[objectID]
+                eraseIDs.append(objectID.copy())
+        for ID in eraseIDs :
+            del objects[ID]
         # print("maxAreaBboxID: ", maxAreaBboxID)
         if maxAreaBboxID in objects :
             trackedCentroid = objects[maxAreaBboxID]
@@ -155,7 +158,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         # cfg.horizontal_measurement = centroidX # horizontal position measurement
         cfg.horizontal_measurement = movingAverage(centroidX, cfg.horizontalPositions, windowSize=5) # horizontal position 
 
-        print("hor_meas", cfg.horizontal_measurement, "centroidX : ", centroidX)
+        # print("hor_meas", cfg.horizontal_measurement, "centroidX : ", centroidX)
         # cfg.distance_measurement = movingAverage(findRssiDistance(cfg.rssi), cfg.distanceMeasurements, windowSize=3)
         # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
 
@@ -200,7 +203,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         #     GPG.steer(100, 20)
         # ###### HANDLE ROBOT MOVEMENT_ END #####
     cv2.imshow("outputImage", image)
-
+    endTime = time.time()
+    print("loopTime: ", endTime - startTime)
     # Exit if 'esc' is clicked
     # cleanup hardware
     key = cv2.waitKey(1)
