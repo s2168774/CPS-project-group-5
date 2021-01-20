@@ -60,10 +60,10 @@ def movingAverage(measurement, measurementsArray, windowSize=5) :
 	measurementsArray.append(measurement)
 	arrayLength = len(measurementsArray)
 	if arrayLength > windowSize :
-		print("windowsize: ", windowSize, arrayLength)
+		# print("windowsize: ", windowSize, arrayLength)
 		measurementsArray = measurementsArray[arrayLength - windowSize - 1: arrayLength - 1]
-		print(measurementsArray)
-		print ("NEEEEEEEEEEEEEEEEEEEEEEXT")
+		# print(measurementsArray)
+		# print ("NEEEEEEEEEEEEEEEEEEEEEEXT")
 	return np.average(measurementsArray)
 
 def horizontalPositionControl_PID() :
@@ -89,7 +89,7 @@ def horizontalPositionControl_PID() :
 
 			diff_output = cfg.horizontal_Kd * diff_error #output of differential controller
 
-			if cfg.horizontal_Ki < 0.0001 and cfg.horizontal_Ki > -0.0001 :
+			if cfg.horizontal_Ki < 0.00001 and cfg.horizontal_Ki > -0.00001 :
 				cfg.horizontal_integralError = 0.0 #calculating the integral, again timestep is not necessary
 			else :
 				cfg.horizontal_integralError += error
@@ -159,7 +159,7 @@ def distanceControl_PID() :
 def cameraInit() :
     camera = PiCamera()
     camera.resolution = (cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT)
-    camera.framerate = 30
+    camera.framerate = 20
     camera.rotation = 180
     return camera
 
