@@ -31,12 +31,14 @@ peopleTracker = CentroidTracker()
 # cv2.createTrackbar("G", "Trackbars", 0, 255, nothing)
 # cv2.createTrackbar("R", "Trackbars", 0, 255, nothing)
 
-
+centroidX = 0
+width = 1
+objects = OrderedDict()
 
 # Create and start PID controller thread
-# horizontalPositionControlThread = Thread(target = horizontalPositionControl_PID)
-# horizontalPositionControlThread.start()
-# print("horizontal control thread started")
+horizontalPositionControlThread = Thread(target = horizontalPositionControl_PID)
+horizontalPositionControlThread.start()
+print("horizontal control thread started")
 
 distanceControlThread = Thread(target = distanceControl_PID)
 distanceControlThread.start()
@@ -77,13 +79,13 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     # G = cv2.getTrackbarPos("G", "Trackbars")
     # R = cv2.getTrackbarPos("R", "Trackbars")
     B = 50
-    G = 20
-    R = 150
+    G = 10
+    R = 200
 
     color = np.uint8([[[B, G, R]]])
     hsvColor = cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
-    lowerLimit = np.uint8([hsvColor[0][0][0]-20, 100,30])
-    upperLimit = np.uint8([hsvColor[0][0][0]+20,255,255])
+    lowerLimit = np.uint8([hsvColor[0][0][0]-10, 150,40])
+    upperLimit = np.uint8([hsvColor[0][0][0]+10,255,255])
 
     # Apply Filters START
     kernel = np.ones((15,15),np.uint8)
@@ -98,12 +100,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     contours = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
     # Get countours END
-    rects = []
-    objects = OrderedDict()
+    
     contoursSorted = sorted(contours, key=cv2.contourArea, reverse=True)
     if len(contoursSorted) > 2 :
         contoursSorted = contoursSorted[:2]
 
+    rects = []
     if len(contours) != 0 :
         for contour in contoursSorted:
             x,y,w,h = cv2.boundingRect(contour)
@@ -127,26 +129,27 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             # draw both the ID of the object and the centroid of the
             # object on the output image
             centerX, centerY, area, width = centroid
-
-            # print("objectID: %d, area: %d " % (objectID, area))
-            if prevArea < area :
-                maxAreaBboxID = objectID
-            prevArea = area
-            text = "ID {}".format(objectID)
-            cv2.putText(image, text, (centerX - 10, centerY - 10),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-            cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
-
+            if area > 100 :
+                # print("objectID: %d, area: %d " % (objectID, area))
+                if prevArea < area :
+                    maxAreaBboxID = objectID
+                prevArea = area
+                text = "ID {}".format(objectID)
+                cv2.putText(image, text, (centerX - 10, centerY - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
+            else:
+                del objects[objectID]
         # print("maxAreaBboxID: ", maxAreaBboxID)
         if maxAreaBboxID in objects :
             trackedCentroid = objects[maxAreaBboxID]
             centroidX = trackedCentroid[0]
-            width = trackedCentroid[3]
+            width = movingAverage(trackedCentroid[3], cfg.bBoxWidths, windowSize = 10)
 
-        # startX, startY, endX, endY = pick[0]
+            # startX, startY, endX, endY = pick[0]
 
-        # Find and display distance to the object
-        # estimatedDistanceToObj = findCameraDistance(endX - startX)
+            # Find and display distance to the object
+            # estimatedDistanceToObj = findCameraDistance(endX - startX)
 
         ###### HANDLE ROBOT MOVEMENT_ START #####
         # cfg.horizontal_measurement = centroidX # horizontal position measurement
@@ -167,8 +170,11 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction + cfg.distance_correction))
         # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction + cfg.distance_correction))
 
-        cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.distance_correction))
-        cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED - int(cfg.distance_correction))
+        # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.distance_correction) - int(cfg.horizontal_correction))
+        # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED - int(cfg.distance_correction) + int(cfg.horizontal_correction))
+        
+        cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(-cfg.distance_correction) - int(cfg.horizontal_correction))
+        cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(-cfg.distance_correction) + int(cfg.horizontal_correction))
         print("distance correction: ", cfg.distance_correction)
         print("horizontal_correction: ", cfg.horizontal_correction)
 
@@ -193,8 +199,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         # else :
         #     GPG.steer(100, 20)
         # ###### HANDLE ROBOT MOVEMENT_ END #####
-
-
     cv2.imshow("outputImage", image)
 
     # Exit if 'esc' is clicked

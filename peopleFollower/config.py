@@ -4,10 +4,12 @@ import easygopigo3
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-MAX_SPEED = 200
+MAX_SPEED = 300
 
+# containers for moving average
 distanceMeasurements = []
 horizontalPositions = []
+bBoxWidths = []
 
 ## horizontal position PID controller parameters START ##
 horizontal_previousError = 0.0
@@ -17,8 +19,8 @@ horizontal_measurement =  FRAME_WIDTH / 2
 horizontal_setpoint = FRAME_WIDTH / 2
 # LeftMotorSpeed = 0
 # rightMotorSpeed = 0
-horizontal_Kp = 0.2
-horizontal_Kd = 0.01
+horizontal_Kp = 0.3
+horizontal_Kd = 0.2
 horizontal_Ki = 0.002
 horizontal_correction = 0.0
 ## horizontal position PID controller parameters END ##
@@ -31,9 +33,9 @@ distance_measurement = 0
 distance_setpoint = 100
 # leftMotorSpeed = 0
 # rightMotorSpeed = 0
-distance_Kp = 4
-distance_Kd = 0.4
-distance_Ki = 0.08
+distance_Kp = 10
+distance_Kd = 0.5
+distance_Ki = 0.0#1
 distance_correction = 0.0
 ## distance PID controller parameters END ##
 
