@@ -78,16 +78,17 @@ def horizontalPositionControl_PID() :
 		while not cfg.threadStopper.is_set() :
 			start = time()
 
-			preverror = cfg.horizontal_previousError # save old error
-			# integral_error = cfg.horizontal_integralError
-
 			error = cfg.horizontal_setpoint - cfg.horizontal_measurement #calculating current error
-			cfg.horizontal_previousError = error
+			print("cfg.horizontal_setpoint", cfg.horizontal_setpoint, "cfg.horizontal_measurement", cfg.horizontal_measurement)
+
 			proportional_output = cfg.horizontal_Kp * error #Output of proportional controller
 
-			diff_error = (error-preverror) #dividing by timestep is not necessary since this can be compensated for by tuning Kd 
+			diff_error = (error-cfg.horizontal_previousError) #dividing by timestep is not necessary since this can be compensated for by tuning Kd 
+			cfg.horizontal_previousError = error
+			print("error: ", error, "preverror: ", cfg.horizontal_previousError)
 
 			diff_output = cfg.horizontal_Kd * diff_error #output of differential controller
+			print("cfg.horizontal_Kd: ", cfg.horizontal_Kd, "diff_error: ", diff_error)
 
 			if cfg.horizontal_Ki < 0.00001 and cfg.horizontal_Ki > -0.00001 :
 				cfg.horizontal_integralError = 0.0 #calculating the integral, again timestep is not necessary
@@ -95,9 +96,10 @@ def horizontalPositionControl_PID() :
 				cfg.horizontal_integralError += error
 
 			integral_output = cfg.horizontal_Ki * cfg.horizontal_integralError  #integral controller output
+			# print("cfg.horizontal_Ki", cfg.horizontal_Ki, cfg.horizontal_integralError)
 
 			cfg.horizontal_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			# print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
+			print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
 			# print(" IN UTILS:: correction: ", cfg.correction, "cfg.measurement: ", cfg.measurement, "cfg.setpoint", cfg.setpoint)
 			# make sure loop frequency is fairly constant
 			end = time()
@@ -126,7 +128,7 @@ def distanceControl_PID() :
 
 			error = cfg.distance_setpoint - cfg.distance_measurement #calculating current error
 			#print ("distance_error: ", error)
-			cfg.distance_previousError = error
+			
 			proportional_output = cfg.distance_Kp * error #Output of proportional controller
 
 			diff_error = (error-preverror) #dividing by timestep is not necessary since this can be compensated for by tuning Kd 
@@ -141,8 +143,6 @@ def distanceControl_PID() :
 			integral_output = cfg.distance_Ki * cfg.distance_integralError  #integral controller output
 
 			cfg.distance_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			# print(" IN UTILS:: correction: ", cfg.correction, "cfg.measurement: ", cfg.measurement, "cfg.setpoint", cfg.setpoint)
-			# make sure loop frequency is fairly constant
 			end = time()
 			delayDiff = end - start
 			if loopPeriod - delayDiff > 0 :
@@ -159,7 +159,7 @@ def distanceControl_PID() :
 def cameraInit() :
     camera = PiCamera()
     camera.resolution = (cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT)
-    camera.framerate = 20
+    camera.framerate = 30
     camera.rotation = 180
     return camera
 

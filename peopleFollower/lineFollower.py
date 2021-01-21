@@ -134,7 +134,7 @@ def lineFollower() :
 
         cv2.imshow("outputImage", image)
         endTime = time.time()
-        print("loopTime: ", endTime - startTime)
+        # print("loopTime: ", endTime - startTime)
         # Exit if 'esc' is clicked
         # cleanup hardware
         key = cv2.waitKey(1)

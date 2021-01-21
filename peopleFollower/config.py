@@ -14,7 +14,7 @@ bBoxWidths = []
 ## horizontal position PID controller parameters START ##
 horizontal_previousError = 0.0
 horizontal_integralError = 0.0
-horizontal_loopFreq = 100
+horizontal_loopFreq = 6
 horizontal_measurement =  FRAME_WIDTH / 2
 horizontal_setpoint = FRAME_WIDTH / 2
 # LeftMotorSpeed = 0

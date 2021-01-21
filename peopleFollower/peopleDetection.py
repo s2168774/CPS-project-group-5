@@ -21,7 +21,7 @@ def personFollower() :
     camera = cameraInit()
 
     #initialize peopleTracker
-    peopleTracker = CentroidTracker()
+    peopleTracker = CentroidTracker(maxDisappeared=10)
 
     # def nothing(x):
     #     pass
@@ -81,11 +81,11 @@ def personFollower() :
         # R = cv2.getTrackbarPos("R", "Trackbars")
         B = 50
         G = 10
-        R = 200
+        R = 180
 
         color = np.uint8([[[B, G, R]]])
         hsvColor = cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
-        lowerLimit = np.uint8([hsvColor[0][0][0]-10, 150,40])
+        lowerLimit = np.uint8([hsvColor[0][0][0]-10, 100,40])
         upperLimit = np.uint8([hsvColor[0][0][0]+10,255,255])
 
         # Apply Filters START
@@ -148,7 +148,7 @@ def personFollower() :
             if maxAreaBboxID in objects :
                 trackedCentroid = objects[maxAreaBboxID]
                 centroidX = trackedCentroid[0]
-                width = movingAverage(trackedCentroid[3], cfg.bBoxWidths, windowSize = 10)
+                width = movingAverage(trackedCentroid[3], cfg.bBoxWidths, windowSize = 4)
 
                 # startX, startY, endX, endY = pick[0]
 
@@ -157,13 +157,13 @@ def personFollower() :
 
             ###### HANDLE ROBOT MOVEMENT_ START #####
             # cfg.horizontal_measurement = centroidX # horizontal position measurement
-            cfg.horizontal_measurement = movingAverage(centroidX, cfg.horizontalPositions, windowSize=5) # horizontal position 
+            cfg.horizontal_measurement = centroidX#movingAverage(centroidX, cfg.horizontalPositions, windowSize=5) # horizontal position 
 
             # print("hor_meas", cfg.horizontal_measurement, "centroidX : ", centroidX)
             # cfg.distance_measurement = movingAverage(findRssiDistance(cfg.rssi), cfg.distanceMeasurements, windowSize=3)
             # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
 
-            cfg.distance_measurement = movingAverage(findCameraDistance(width), cfg.distanceMeasurements, windowSize=5)
+            cfg.distance_measurement = movingAverage(findCameraDistance(width), cfg.distanceMeasurements, windowSize=2)
             # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
 
 
@@ -177,15 +177,15 @@ def personFollower() :
             # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.distance_correction) - int(cfg.horizontal_correction))
             # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED - int(cfg.distance_correction) + int(cfg.horizontal_correction))
             
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(-cfg.distance_correction) - int(cfg.horizontal_correction))
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(-cfg.distance_correction) + int(cfg.horizontal_correction))
-            # print("distance correction: ", cfg.distance_correction)
-            # print("horizontal_correction: ", cfg.horizontal_correction)
-
-            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(-cfg.horizontal_correction))
-            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.horizontal_correction))
+            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(-cfg.distance_correction) - int(cfg.horizontal_correction))
+            cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(-cfg.distance_correction) + int(cfg.horizontal_correction))
             print("distance correction: ", cfg.distance_correction)
             print("horizontal_correction: ", cfg.horizontal_correction)
+
+            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(0-cfg.horizontal_correction))
+            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(0 + cfg.horizontal_correction))
+            # print("distance correction: ", cfg.distance_correction)
+            # print("horizontal_correction: ", cfg.horizontal_correction)
             # if cfg.distance_measurement > 40 :
             #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - cfg.horizontal_correction)
             #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + cfg.horizontal_correction)

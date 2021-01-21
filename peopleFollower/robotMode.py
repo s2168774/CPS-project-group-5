@@ -16,12 +16,13 @@ if mode == MODE_LINE_FOLLOWER :
 elif mode == MODE_PERSON_FOLLOWER :
 	print("START following person")
 	# parameters of the PID controller
-	cfg.horizontal_Kp = 0.3
-	cfg.horizontal_Kd = 8.0
+	cfg.MAX_SPEED = 400
+	cfg.horizontal_Kp = 0.24
+	cfg.horizontal_Kd = 0.3
 	cfg.horizontal_Ki = 0.0#02#001#0.000022
-	distance_setpoint = 100
-	cfg.distance_Kp = 10
-	cfg.distance_Kd = 0.5
+	cfg.distance_setpoint = 60
+	cfg.distance_Kp = 4.0
+	cfg.distance_Kd = 8.0
 	cfg.distance_Ki = 0.0#1
 	personFollower()
 else :
