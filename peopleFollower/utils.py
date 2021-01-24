@@ -1,5 +1,9 @@
 import numpy as np
 import config as cfg
+import cv2
+import imutils
+from imutils.object_detection import non_max_suppression
+
 from picamera import PiCamera 
 from time import sleep, time
 
@@ -60,10 +64,7 @@ def movingAverage(measurement, measurementsArray, windowSize=5) :
 	measurementsArray.append(measurement)
 	arrayLength = len(measurementsArray)
 	if arrayLength > windowSize :
-		# print("windowsize: ", windowSize, arrayLength)
 		measurementsArray = measurementsArray[arrayLength - windowSize - 1: arrayLength - 1]
-		# print(measurementsArray)
-		# print ("NEEEEEEEEEEEEEEEEEEEEEEXT")
 	return np.average(measurementsArray)
 
 def horizontalPositionControl_PID() :
@@ -73,22 +74,20 @@ def horizontalPositionControl_PID() :
 	loopPeriod = 1 / cfg.horizontal_loopFreq
 
 	try :
-		# print("begin: ", time())
-		# print("isthreadstopped: ", cfg.threadStopper.is_set())
 		while not cfg.threadStopper.is_set() :
 			start = time()
 
 			error = cfg.horizontal_setpoint - cfg.horizontal_measurement #calculating current error
-			print("cfg.horizontal_setpoint", cfg.horizontal_setpoint, "cfg.horizontal_measurement", cfg.horizontal_measurement)
+			# print("cfg.horizontal_setpoint", cfg.horizontal_setpoint, "cfg.horizontal_measurement", cfg.horizontal_measurement)
 
 			proportional_output = cfg.horizontal_Kp * error #Output of proportional controller
 
 			diff_error = (error-cfg.horizontal_previousError) #dividing by timestep is not necessary since this can be compensated for by tuning Kd 
 			cfg.horizontal_previousError = error
-			print("error: ", error, "preverror: ", cfg.horizontal_previousError)
+			# print("error: ", error, "preverror: ", cfg.horizontal_previousError)
 
 			diff_output = cfg.horizontal_Kd * diff_error #output of differential controller
-			print("cfg.horizontal_Kd: ", cfg.horizontal_Kd, "diff_error: ", diff_error)
+			# print("cfg.horizontal_Kd: ", cfg.horizontal_Kd, "diff_error: ", diff_error)
 
 			if cfg.horizontal_Ki < 0.00001 and cfg.horizontal_Ki > -0.00001 :
 				cfg.horizontal_integralError = 0.0 #calculating the integral, again timestep is not necessary
@@ -99,7 +98,7 @@ def horizontalPositionControl_PID() :
 			# print("cfg.horizontal_Ki", cfg.horizontal_Ki, cfg.horizontal_integralError)
 
 			cfg.horizontal_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
+			# print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
 			# print(" IN UTILS:: correction: ", cfg.correction, "cfg.measurement: ", cfg.measurement, "cfg.setpoint", cfg.setpoint)
 			# make sure loop frequency is fairly constant
 			end = time()
@@ -163,3 +162,65 @@ def cameraInit() :
     camera.rotation = 180
     return camera
 
+def getColorLimitsFromBGR(blue, green, red) :
+	        #Set limits for color filter
+    color = np.uint8([[[blue, green, red]]])
+    hsvColor = cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
+    lowerLimit = np.uint8([hsvColor[0][0][0]-10, 100,50])
+    upperLimit = np.uint8([hsvColor[0][0][0]+10,255,255])
+    return lowerLimit, upperLimit
+
+def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit) :
+    kernel = np.ones((15,15),np.uint8)
+    mask = cv2.inRange(hsvImage, lowerColorLimit, upperColorLimit)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    return mask
+
+def getAreaSortedContours(mask) :
+	edged = cv2.Canny(mask, 35, 125)
+	contours = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+	contours = imutils.grab_contours(contours)
+	contoursSorted = sorted(contours, key=cv2.contourArea, reverse=True)
+	if len(contoursSorted) > 1 :
+		contoursSorted = contoursSorted[:1]
+	return contoursSorted
+
+def drawBoxes(image, boxCoordinates) :
+	if len(boxCoordinates) > 0:
+		for (startX, startY, endX, endY) in boxCoordinates:
+			cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+def getBoundingBoxes(contours) :
+	rects = []
+	if len(contours) != 0 :
+		for contour in contours:
+			x,y,w,h = cv2.boundingRect(contour)
+			rects.append([x,y,x+w,y+h])
+			rects = np.array(rects)
+			return non_max_suppression(rects, probs=None, overlapThresh=0.45)
+	else :
+		print("No contours found...")
+		return []
+
+def drawObjectCoordinates(image, objects) :
+	for (objectID, centroid) in objects.items():
+		centerX, centerY, area, width = centroid
+		text = "ID {}".format(objectID)
+		cv2.putText(image, text, (centerX - 10, centerY - 10),
+		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+		cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
+
+def findCenterOfBiggestBox(objects) :
+	maxAreaBboxID = 0
+	prevArea = 0
+	for (objectID, centroid) in objects.items():
+		centerX, centerY, area, width = centroid
+		if area > 100 :
+		# print("objectID: %d, area: %d " % (objectID, area))
+			if prevArea < area :
+				maxAreaBboxID = objectID
+				prevArea = area
+	if maxAreaBboxID in objects :
+		trackedCentroid = objects[maxAreaBboxID]
+		return trackedCentroid[0]

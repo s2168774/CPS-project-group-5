@@ -11,7 +11,8 @@ from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
 
-from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage
+from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
+
 from centroidTracker import CentroidTracker
 from imutils.object_detection import non_max_suppression
 from wifiScanner import WifiScanner
@@ -75,138 +76,50 @@ def personFollower() :
         blurred = cv2.GaussianBlur(image, (5, 5), 0)
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV) # convert picture from BGR to HSV color format
 
-        # Optional trackbars left for determining threshold 'live' if current is not working
+        # # Optional trackbars left for determining threshold 'live' if current is not working
         # B = cv2.getTrackbarPos("B", "Trackbars")
         # G = cv2.getTrackbarPos("G", "Trackbars")
         # R = cv2.getTrackbarPos("R", "Trackbars")
-        B = 50
-        G = 10
-        R = 180
+        # B = 50
+        # G = 10
+        # R = 180
 
-        color = np.uint8([[[B, G, R]]])
-        hsvColor = cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
-        lowerLimit = np.uint8([hsvColor[0][0][0]-10, 100,40])
-        upperLimit = np.uint8([hsvColor[0][0][0]+10,255,255])
+        lowerLimit, upperLimit = getColorLimitsFromBGR(50, 10, 180)
 
-        # Apply Filters START
-        kernel = np.ones((15,15),np.uint8)
-        mask = cv2.inRange(hsv, lowerLimit, upperLimit)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
-        # cv2.imshow("mask", mask)
-        # Apply Filters END
+        mask = getFilteredColorMask(hsv, lowerLimit, upperLimit)
 
-        # Get object contours START
-        edged = cv2.Canny(mask, 35, 125)
-        contours = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-        contours = imutils.grab_contours(contours)
-        # Get countours END
-        
-        contoursSorted = sorted(contours, key=cv2.contourArea, reverse=True)
-        if len(contoursSorted) > 2 :
-            contoursSorted = contoursSorted[:2]
+        contoursSorted = getAreaSortedContours(mask)
+        boundingBoxes = getBoundingBoxes(contoursSorted)
 
-        rects = []
-        if len(contours) != 0 :
-            for contour in contoursSorted:
-                x,y,w,h = cv2.boundingRect(contour)
-                rects.append([x,y,x+w,y+h])
-            pass
+        drawBoxes(image, boundingBoxes)
 
-            rects = np.array(rects)
-            pick = non_max_suppression(rects, probs=None, overlapThresh=0.45)
-
-            # draw the final bounding boxes
-            for (startX, startY, endX, endY) in pick:
-                cv2.rectangle(image, (startX, startY), (endX, endY), (0, 255, 0), 2)
-                pass
-
-            objects = peopleTracker.update(pick)
+        objects = peopleTracker.update(boundingBoxes)
 
         if bool(objects):
             maxAreaBboxID = 0
             prevArea = 0
             eraseIDs = []
-            for (objectID, centroid) in objects.items():
-                # draw both the ID of the object and the centroid of the
-                # object on the output image
-                centerX, centerY, area, width = centroid
-                if area > 100 :
-                    # print("objectID: %d, area: %d " % (objectID, area))
-                    if prevArea < area :
-                        maxAreaBboxID = objectID
-                    prevArea = area
-                    text = "ID {}".format(objectID)
-                    cv2.putText(image, text, (centerX - 10, centerY - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                    cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
-                else:
-                    eraseIDs.append(objectID.copy())
-            for ID in eraseIDs :
-                del objects[ID]
+
+            drawObjectCoordinates(image, objects)
+
             # print("maxAreaBboxID: ", maxAreaBboxID)
             if maxAreaBboxID in objects :
                 trackedCentroid = objects[maxAreaBboxID]
                 centroidX = trackedCentroid[0]
                 width = movingAverage(trackedCentroid[3], cfg.bBoxWidths, windowSize = 4)
 
-                # startX, startY, endX, endY = pick[0]
-
-                # Find and display distance to the object
-                # estimatedDistanceToObj = findCameraDistance(endX - startX)
-
-            ###### HANDLE ROBOT MOVEMENT_ START #####
-            # cfg.horizontal_measurement = centroidX # horizontal position measurement
-            cfg.horizontal_measurement = centroidX#movingAverage(centroidX, cfg.horizontalPositions, windowSize=5) # horizontal position 
-
-            # print("hor_meas", cfg.horizontal_measurement, "centroidX : ", centroidX)
-            # cfg.distance_measurement = movingAverage(findRssiDistance(cfg.rssi), cfg.distanceMeasurements, windowSize=3)
-            # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
+            cfg.horizontal_measurement = centroidX#movingAverage(centroidX, 
 
             cfg.distance_measurement = movingAverage(findCameraDistance(width), cfg.distanceMeasurements, windowSize=2)
-            # print("Estimated distance to phone %d:" % (cfg.distance_measurement))
-
 
 
             cv2.putText(image, "%.2fcm" % (cfg.distance_measurement),
             (image.shape[1] - 200, image.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
 
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction + cfg.distance_correction))
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction + cfg.distance_correction))
-
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.distance_correction) - int(cfg.horizontal_correction))
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED - int(cfg.distance_correction) + int(cfg.horizontal_correction))
             
             cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(-cfg.distance_correction) - int(cfg.horizontal_correction))
             cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(-cfg.distance_correction) + int(cfg.horizontal_correction))
-            print("distance correction: ", cfg.distance_correction)
-            print("horizontal_correction: ", cfg.horizontal_correction)
 
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(0-cfg.horizontal_correction))
-            # cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(0 + cfg.horizontal_correction))
-            # print("distance correction: ", cfg.distance_correction)
-            # print("horizontal_correction: ", cfg.horizontal_correction)
-            # if cfg.distance_measurement > 40 :
-            #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - cfg.horizontal_correction)
-            #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + cfg.horizontal_correction)
-            # else :
-            #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=0)
-            #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=0)
-                # cfg.MAX_SPEED -= 10
-            ## get first object found centroid
-            
-            # followedCentroid = objects[0]
-            # followedCentroidX, followedCentroidY = followedCentroid
-            # imageMidX = IMAGE_WIDTH / 2
-
-            # # movement rules: stay within STEER_TRESHOLD
-            # if (followedCentroidX < (imageMidX + STEER_TRESHOLD)) and (followedCentroidX > (imageMidX - STEER_TRESHOLD)) :
-            #     GPG.steer(100, 100)
-            # elif followedCentroidX > (imageMidX + STEER_TRESHOLD):
-            #     GPG.steer(20, 100)
-            # else :
-            #     GPG.steer(100, 20)
-            # ###### HANDLE ROBOT MOVEMENT_ END #####
         cv2.imshow("outputImage", image)
         endTime = time.time()
         print("loopTime: ", endTime - startTime)

@@ -9,6 +9,7 @@ MODE_PERSON_FOLLOWER = 1
 
 
 if mode == MODE_LINE_FOLLOWER :
+	print("START line following")
 	cfg.horizontal_Kp =0.23 #0.23
 	cfg.horizontal_Kd = 12.0#12.0
 	cfg.horizontal_Ki = 0.0001#0.000022
