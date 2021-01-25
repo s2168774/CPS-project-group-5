@@ -16,7 +16,7 @@ from utils import findCameraDistance, horizontalPositionControl_PID, distanceCon
 from centroidTracker import CentroidTracker
 from imutils.object_detection import non_max_suppression
 from wifiScanner import WifiScanner
-
+## TODO: 
 def personFollower() :
     # Initialize PiCamera
     camera = cameraInit()
@@ -73,7 +73,7 @@ def personFollower() :
         # print(deviceScannerThread.is_alive())
         # Find object in the image
         
-        blurred = cv2.GaussianBlur(image, (5, 5), 0)
+        blurred = cv2.GaussianBlur(image, (3, 3), 0)
         hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV) # convert picture from BGR to HSV color format
 
         # # Optional trackbars left for determining threshold 'live' if current is not working
@@ -102,16 +102,22 @@ def personFollower() :
 
             drawObjectCoordinates(image, objects)
 
-            # print("maxAreaBboxID: ", maxAreaBboxID)
-            if maxAreaBboxID in objects :
-                trackedCentroid = objects[maxAreaBboxID]
-                centroidX = trackedCentroid[0]
-                width = movingAverage(trackedCentroid[3], cfg.bBoxWidths, windowSize = 4)
+            # # print("maxAreaBboxID: ", maxAreaBboxID)
+            # if maxAreaBboxID in objects :
+            #     trackedCentroid = objects[maxAreaBboxID]
+            #     centroidX = trackedCentroid[0]
+            #     width = movingAverage(trackedCentroid[3], cfg.bBoxWidths, windowSize = 4)
+            #     print("width", width)
+            biggestBoxID, centroidX = findCenterOfBiggestBox(objects)
 
             cfg.horizontal_measurement = centroidX#movingAverage(centroidX, 
 
+            _, _, _, width = objects[biggestBoxID]
             cfg.distance_measurement = movingAverage(findCameraDistance(width), cfg.distanceMeasurements, windowSize=2)
+            
+            # cfg.distance_measurement = findCameraDistance(width)
 
+            print(cfg.distance_measurement)
 
             cv2.putText(image, "%.2fcm" % (cfg.distance_measurement),
             (image.shape[1] - 200, image.shape[0] - 20), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 0), 3)
@@ -128,12 +134,13 @@ def personFollower() :
         key = cv2.waitKey(1)
         rawCapture.truncate(0)
         if key == 27:
-            horizontalPositionControlThread.join()
-            distanceControlThread.join()
-            deviceScannerThread.join()
+            cfg.threadStopper.set()
             cfg.GPG.reset_all()
             camera.close()
             cfg.GPG.stop()
+            horizontalPositionControlThread.join()
+            distanceControlThread.join()
+            # deviceScannerThread.join()
             break
 
 cv2.destroyAllWindows()
