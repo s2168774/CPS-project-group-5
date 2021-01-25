@@ -26,8 +26,10 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -82,9 +84,8 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
                 finish();
             }
             // Automatically connects to the device upon successful start-up initialization.
-            mBluetoothLeService.connect(mDeviceAddress);
+//            mBluetoothLeService.connect(mDeviceAddress);
 
-            goToMenu();
         }
 
         @Override
@@ -115,6 +116,10 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
             } else if (BluetoothLeService.ACTION_GATT_SERVICES_DISCOVERED.equals(action)) {
                 // Show all the supported services and characteristics on the user interface.
                 displayGattServices(mBluetoothLeService.getSupportedGattServices());
+
+                // TODO: I think that this is where the BLE device is fully connected and the users should go to the main menu
+                goToMenu();
+
             } else if (BluetoothLeService.ACTION_DATA_AVAILABLE.equals(action)) {
                 displayData(intent.getStringExtra(BluetoothLeService.EXTRA_DATA));
             }
@@ -180,8 +185,10 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
         getActionBar().setDisplayHomeAsUpEnabled(true);
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
+
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onResume() {
         super.onResume();
@@ -218,6 +225,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
         return true;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId()) {
@@ -325,6 +333,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     // New list with variables
     private int destination;
     private ArrayList<Integer> stationArray = new ArrayList<>(Arrays.asList(0));
+    private ArrayList<ArrayList<Integer>> stationConnections = new ArrayList<ArrayList<Integer>>();
 
 
     /**
@@ -334,7 +343,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     public void goToMenu() {
         setContentView(R.layout.main_menu);
         // Set an default list with locations:
-        for (int i = 0; i < 3; i++){
+        for (int i = 0; i < 3; i++) {
             stationArray.add(stationArray.size());
         }
     }
@@ -349,16 +358,18 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
      */
     public void goToSettings(View view) {
         setContentView(R.layout.settings);
+//        TextView connectionInfo = (TextView) findViewById(R.id.connectionInfo);
+//        connectionInfo.setText("Connection info:\nDevice name: " + mDeviceName + "\nAddress: " + mDeviceAddress);
     }
 
     public void changeStations(View view) {
         // TODO: add method to change the station layout
+        // use addStation & removeStation
     }
 
     public void searchDevices(View view) {
         // TODO: add method to change the connected device
-        //What connections/settings should be terminated/changed?
-        onResume();
+        //What connections/settings should be terminated/changed and how to get back to DeviceScanActivity?
     }
 
 
@@ -379,7 +390,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        setDestination(view, position);
+        setDestination(position);
     }
 
     @Override
@@ -387,22 +398,45 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
         // TODO: Auto-generated method stub
     }
 
-    public void setDestination(View view, int location) {
+    public void setDestination(int location) {
         destination = location;
     }
 
     public void goToDestination(View view) {
-        // TODO: add method to give the car the order
+        // TODO: write a string with a 1 and the destination to the GoPiGo
+
         final Button goToStationButton = findViewById(R.id.goToStation);
         goToStationButton.setBackgroundColor(Color.GREEN);
         System.out.println("Car goes to station: " + destination);
     }
 
     public void stopCar(View view) {
+        // TODO: write a string with a 0 to the GoPiGo
         final Button goToStationButton = findViewById(R.id.goToStation);
         goToStationButton.setBackgroundColor(Color.MAGENTA);
         System.out.println("All orders are cancelled!");
     }
+
+//    public void addStation(int red, int blue, int green, int yellow) {
+//        int i = 0;
+//        while (stationArray.contains(i)) {
+//            i++;
+//        }
+//        stationArray.add(i);
+//        ArrayList<Integer> connections = new ArrayList<>(Arrays.asList(red, blue, green, yellow));
+//        stationConnections.add(i, connections);
+//
+//        // TODO: create connection from other side as well
+//    }
+//
+//    public void removeStation(View view, int station) {
+//        stationArray.remove(station);
+//        stationConnections.remove(station);
+//
+//        for (int i = station; i < stationArray.size(); i++) {
+//            // TODO: remove connection from other side as well
+//        }
+//    }
 
     /**
      *  Methods for mode 2: person following
@@ -410,22 +444,19 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     public void personFollowing(View view) {
         setContentView(R.layout.mode_person);
     }
-    //TODO: implement functions and screens for person following
 
     public void scanPerson(View view) {
-        //TODO: let the Pi scan for persons, send a picture/videofeed of the choice to the app, so the user can try a new scan or start the following
-    }
-
-    public void setFollowingDistance(View view) {
-        // TODO: somehow use the text input to set the distance. (use default if no distance is specified and set limits on the input)
+        //TODO: send a string with a 2 and a 0 to let the Pi scan for persons
     }
 
     public void goFollowPerson(View view) {
+        //TODO: send a string with a 2 and 1 to start the person following
         final Button goFollowPersonButton = findViewById(R.id.goFollowPerson);
         goFollowPersonButton.setBackgroundColor(Color.GREEN);
     }
 
     public void stopFollowPerson(View view) {
+        // TODO: write a string with a 0 to the GoPiGo
         final Button goFollowPersonButton = findViewById(R.id.goFollowPerson);
         goFollowPersonButton.setBackgroundColor(Color.MAGENTA);
     }
