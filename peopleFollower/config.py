@@ -13,7 +13,7 @@ distanceMeasurements = []
 horizontalPositions = []
 bBoxWidths = []
 ##
-## Horizontal position PID controller parameters START ##
+## Horizontal position PID controller parameters
 ##
 horizontal_previousError = 0.0
 horizontal_integralError = 0.0
@@ -26,9 +26,7 @@ horizontal_Kp =0.23 #0.23
 horizontal_Kd = 12.0#12.0
 horizontal_Ki = 0.0001#0.000022
 horizontal_correction = 0.0
-##
-## Horizontal position PID controller parameters END ##
-##
+
 
 ##
 ## Distance PID controller parameters START ##
@@ -44,9 +42,7 @@ distance_Kp = 10
 distance_Kd = 0.5
 distance_Ki = 0.0#1
 distance_correction = 0.0
-##
-## Distance PID controller parameters END ##
-##
+
 
 ##
 ## Line follower params
@@ -92,3 +88,11 @@ threadStopper = Event()
 
 GPG = easygopigo3.EasyGoPiGo3() # Create an instance of the GoPiGo3 class. GPG will be the GoPiGo3 object.
 GPG.set_speed(MAX_SPEED)
+
+##
+## Accelerometer data
+##
+
+cfg.xAccl = 0.0
+cfg.yAccl = 0.0
+cfg.zAccl = 0.0
