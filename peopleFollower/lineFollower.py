@@ -11,6 +11,7 @@ from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
 
+<<<<<<< HEAD
 from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
 
 from centroidTracker import CentroidTracker
@@ -143,8 +144,8 @@ class LineFollower() :
                     firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
                     cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
                 
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED * 0.75) - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED * 0.75) + int(cfg.horizontal_correction))
+                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
+                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED / 2) + int(cfg.horizontal_correction))
              
                 print("Both colors detected!!")
 
