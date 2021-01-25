@@ -11,6 +11,7 @@ from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
 
+<<<<<<< HEAD
 from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
 
 from centroidTracker import CentroidTracker

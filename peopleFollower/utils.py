@@ -3,7 +3,6 @@ import config as cfg
 import cv2
 import imutils
 from imutils.object_detection import non_max_suppression
-
 from picamera import PiCamera 
 from time import sleep, time
 
@@ -61,6 +60,7 @@ def rectArea(width, height) :
 ## :rtype:     float
 ##
 def movingAverage(measurement, measurementsArray, windowSize=5) :
+
 	if measurement != None:
 		measurementsArray.append(measurement)
 	arrayLength = len(measurementsArray)
@@ -75,6 +75,7 @@ def horizontalPositionControl_PID() :
 	loopPeriod = 1 / cfg.horizontal_loopFreq
 
 	try :
+<<<<<<< HEAD
 		while not cfg.threadStopper.is_set() :
 			start = time()
 
@@ -128,7 +129,7 @@ def distanceControl_PID() :
 
 			error = cfg.distance_setpoint - cfg.distance_measurement #calculating current error
 			#print ("distance_error: ", error)
-			
+
 			proportional_output = cfg.distance_Kp * error #Output of proportional controller
 
 			diff_error = (error-preverror) #dividing by timestep is not necessary since this can be compensated for by tuning Kd 
@@ -143,6 +144,7 @@ def distanceControl_PID() :
 			integral_output = cfg.distance_Ki * cfg.distance_integralError  #integral controller output
 
 			cfg.distance_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
+
 			end = time()
 			delayDiff = end - start
 			if loopPeriod - delayDiff > 0 :

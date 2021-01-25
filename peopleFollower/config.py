@@ -12,7 +12,6 @@ MAX_SPEED = 200 #150
 distanceMeasurements = []
 horizontalPositions = []
 bBoxWidths = []
-
 ##
 ## Horizontal position PID controller parameters START ##
 ##
@@ -81,6 +80,7 @@ class ColorLimitsDict() :
 		return self.colorLimitsDict[color][0]
 
 colorLimitsDict = ColorLimitsDict()
+
 ## Distance from RSSI parameters START ##
 scanTime = float("inf")
 
