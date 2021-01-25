@@ -11,7 +11,6 @@ from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
 
-<<<<<<< HEAD
 from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
 
 from centroidTracker import CentroidTracker
@@ -115,7 +114,8 @@ class LineFollower() :
             firstContoursSorted = getAreaSortedContours(maskFirst)
             secondContoursSorted = getAreaSortedContours(maskSecond)
             # print("lineFollower.py: contours len: ", len(firstContoursSorted))
-            cv2.drawContours(image, firstContoursSorted, -1, (0, 255, 0), 3)
+
+            # cv2.drawContours(image, firstContoursSorted, -1, (0, 255, 0), 3)
             # cv2.imshow("with contours", image)
 
             # cv2.imshow("contours pink", firstContoursSorted)
@@ -138,10 +138,10 @@ class LineFollower() :
             if bool(firstColorObjects) and bool(secondColorObjects) :
                 if not self.isNextStep :
                     self.isNextStep = self.updateStep()
-                    secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
+                    _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
                     cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
                 else:
-                    firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
+                    _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
                     cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
                 
                 cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
@@ -152,7 +152,7 @@ class LineFollower() :
             elif bool(firstColorObjects) and not bool(secondColorObjects) :
                 if self.isNextStep :
                     self.isNextStep = False
-                firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
+                _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
                 cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
                 cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
                 cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))

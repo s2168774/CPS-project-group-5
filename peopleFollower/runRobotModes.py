@@ -21,15 +21,13 @@ while True : #not cfg.threadStopper.is_set() :
 ##
 ## SCAN FOR BLUETOOTH INPUT
 ##
-
-
 	if mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
 		myPath = [cfg.color_PINK, cfg.color_YELLOW, cfg.color_PINK, cfg.color_YELLOW, cfg.color_PINK]
 		print("START line following")
 		cfg.horizontal_loopFreq = 8
-		cfg.MAX_SPEED = 100
+		cfg.MAX_SPEED = 150
 		cfg.horizontal_Kp =0.15 #0.23
-		cfg.horizontal_Kd = 0.4#12.0
+		cfg.horizontal_Kd = 0.3#12.0
 		cfg.horizontal_Ki = 0.0001#0.000022
 		isLineFollowerRunning=True
 		lineFollowerThread(target=lineFollower.run(myPath))
