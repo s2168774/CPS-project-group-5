@@ -75,7 +75,6 @@ def horizontalPositionControl_PID() :
 	loopPeriod = 1 / cfg.horizontal_loopFreq
 
 	try :
-<<<<<<< HEAD
 		while not cfg.threadStopper.is_set() :
 			start = time()
 
