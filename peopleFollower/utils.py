@@ -61,10 +61,11 @@ def rectArea(width, height) :
 ## :rtype:     float
 ##
 def movingAverage(measurement, measurementsArray, windowSize=5) :
-	measurementsArray.append(measurement)
+	if measurement != None:
+		measurementsArray.append(measurement)
 	arrayLength = len(measurementsArray)
 	if arrayLength > windowSize :
-		measurementsArray = measurementsArray[arrayLength - windowSize - 1: arrayLength - 1]
+		measurementsArray = measurementsArray[(arrayLength - windowSize): (arrayLength - 1)]
 	return np.average(measurementsArray)
 
 def horizontalPositionControl_PID() :
@@ -98,8 +99,8 @@ def horizontalPositionControl_PID() :
 			# print("cfg.horizontal_Ki", cfg.horizontal_Ki, cfg.horizontal_integralError)
 
 			cfg.horizontal_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			# print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
-			# print(" IN UTILS:: correction: ", cfg.correction, "cfg.measurement: ", cfg.measurement, "cfg.setpoint", cfg.setpoint)
+			print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
+			print(" IN UTILS:: correction: ", cfg.horizontal_correction, "cfg.measurement: ", cfg.horizontal_measurement, "cfg.setpoint", cfg.horizontal_setpoint)
 			# make sure loop frequency is fairly constant
 			end = time()
 			delayDiff = end - start
@@ -171,19 +172,30 @@ def getColorLimitsFromBGR(blue, green, red) :
     return lowerLimit, upperLimit
 
 def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit) :
-    kernel = np.ones((15,15),np.uint8)
+    kernel = np.ones((4,4),np.uint8)
     mask = cv2.inRange(hsvImage, lowerColorLimit, upperColorLimit)
     mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     return mask
 
 def getAreaSortedContours(mask) :
-	edged = cv2.Canny(mask, 35, 125)
+	maxArea = 0.0
+	edged = cv2.Canny(mask, 100, 200)
 	contours = cv2.findContours(edged.copy(), cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
 	contours = imutils.grab_contours(contours)
 	contoursSorted = sorted(contours, key=cv2.contourArea, reverse=True)
+	# cv2.imshow("edged: ", edged)
 	if len(contoursSorted) > 1 :
 		contoursSorted = contoursSorted[:1]
+	# for i in range(len(contoursSorted)):
+	# 	maxArea = cv2.contourArea(contoursSorted[0])
+		# print(a)
+		# print(cv2.contourArea(contoursSorted[0]))
+		# print(i, cv2.contourArea(contoursSorted[i]))
+	# print("utils.py contours len: ", len(contoursSorted))
+	# a = cv2.contourArea(contoursSorted[0])
+	# maxArea = cv2.contourArea(contoursSorted[0])
+	# if contours != None and maxArea > 0.5:
 	return contoursSorted
 
 def drawBoxes(image, boxCoordinates) :
@@ -193,34 +205,56 @@ def drawBoxes(image, boxCoordinates) :
 
 def getBoundingBoxes(contours) :
 	rects = []
-	if len(contours) != 0 :
+	if contours != None and len(contours) != 0 :
 		for contour in contours:
 			x,y,w,h = cv2.boundingRect(contour)
 			rects.append([x,y,x+w,y+h])
 			rects = np.array(rects)
-			return non_max_suppression(rects, probs=None, overlapThresh=0.45)
+			# return non_max_suppression(rects, probs=None, overlapThresh=0.45)
+			return rects
 	else :
 		print("No contours found...")
 		return []
 
 def drawObjectCoordinates(image, objects) :
-	for (objectID, centroid) in objects.items():
-		centerX, centerY, area, width = centroid
-		text = "ID {}".format(objectID)
-		cv2.putText(image, text, (centerX - 10, centerY - 10),
-		cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-		cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
+	if bool(objects) :
+		for (objectID, centroid) in objects.items():
+			centerX, centerY, area, width = centroid
+			text = "ID {}".format(objectID)
+			cv2.putText(image, text, (centerX - 10, centerY - 10),
+			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+			cv2.circle(image, (centerX, centerY), 4, (0, 255, 0), -1)
 
 def findCenterOfBiggestBox(objects) :
 	maxAreaBboxID = 0
 	prevArea = 0
 	for (objectID, centroid) in objects.items():
 		centerX, centerY, area, width = centroid
-		if area > 100 :
-		# print("objectID: %d, area: %d " % (objectID, area))
-			if prevArea < area :
-				maxAreaBboxID = objectID
-				prevArea = area
+		# if area > 100 :
+		if prevArea < area :
+			maxAreaBboxID = objectID
+			prevArea = area
 	if maxAreaBboxID in objects :
 		trackedCentroid = objects[maxAreaBboxID]
-		return trackedCentroid[0]
+		return maxAreaBboxID, trackedCentroid[0]
+
+
+# class Path():
+# 	def __init__(self, path=1) :
+# 		self.pink = 1
+# 		self.yellow = 2
+# 		self.blue = 3
+# 		self.red = 4
+# 		# self.defaultPath = self.pink
+# 		self.path = []
+
+# 	def setPath(self, path) :
+# 		self.path.clear()
+# 		for color in path :
+# 			self.addToPath(color)
+
+# 	def addToPath(self, pathColor) :
+# 		self.path.append(pathColor)
+
+# 	def printPath(self) :
+# 		print(self.path)
