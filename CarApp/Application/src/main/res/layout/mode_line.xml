@@ -63,6 +63,7 @@
         android:onClick="goToDestination"
         android:text="Go"
         android:textSize="24sp"
+        android:background="#F00"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/stopCar"
         app:layout_constraintHorizontal_bias="0.5"

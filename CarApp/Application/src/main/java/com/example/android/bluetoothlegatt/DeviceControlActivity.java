@@ -186,6 +186,17 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
         Intent gattServiceIntent = new Intent(this, BluetoothLeService.class);
         bindService(gattServiceIntent, mServiceConnection, BIND_AUTO_CREATE);
 
+        // Set an default list with locations:
+        for (int i = 0; i < 3; i++) {
+            stationArray.add(stationArray.size());
+        }
+        // Set an default list with colors:
+        colorArray.add("Pink");
+        colorArray.add("Yellow");
+        colorArray.add("Blue");
+        colorArray.add("Red");
+        colorArray.add("Marker");
+
     }
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -332,8 +343,10 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
 
     // New list with variables
     private int destination;
+    private int color;
     private ArrayList<Integer> stationArray = new ArrayList<>(Arrays.asList(0));
     private ArrayList<ArrayList<Integer>> stationConnections = new ArrayList<ArrayList<Integer>>();
+    private ArrayList<String> colorArray = new ArrayList<String>();
 
 
     /**
@@ -342,16 +355,19 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     // When a device is connected:
     public void goToMenu() {
         setContentView(R.layout.main_menu);
-        // Set an default list with locations:
-        for (int i = 0; i < 3; i++) {
-            stationArray.add(stationArray.size());
-        }
     }
 
     // When switching between modes:
     public void returnMenu(View view) {
         setContentView(R.layout.main_menu);
     }
+
+    public void writeValue(int value, int destination, String uuid) {
+        if(mBluetoothLeService != null) {
+            mBluetoothLeService.writeCustomCharacteristic(value, destination, uuid);
+        }
+    }
+
 
     /**
      *  Methods for the settings page
@@ -385,35 +401,35 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
         ArrayAdapter<Integer> spinnerAdapter = new ArrayAdapter<Integer>(DeviceControlActivity.this, android.R.layout.simple_spinner_item, stationArray);
         spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinner.setAdapter(spinnerAdapter);
-        spinner.setOnItemSelectedListener(this);
-    }
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                destination = position;
+            }
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-        setDestination(position);
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        // TODO: Auto-generated method stub
-    }
-
-    public void setDestination(int location) {
-        destination = location;
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                destination = 0;
+            }
+        });
     }
 
     public void goToDestination(View view) {
         // TODO: write a string with a 1 and the destination to the GoPiGo
 
         final Button goToStationButton = findViewById(R.id.goToStation);
+
+        writeValue(1, destination, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+
         goToStationButton.setBackgroundColor(Color.GREEN);
         System.out.println("Car goes to station: " + destination);
     }
 
     public void stopCar(View view) {
-        // TODO: write a string with a 0 to the GoPiGo
+        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+
         final Button goToStationButton = findViewById(R.id.goToStation);
-        goToStationButton.setBackgroundColor(Color.MAGENTA);
+        goToStationButton.setBackgroundColor(Color.RED);
         System.out.println("All orders are cancelled!");
     }
 
@@ -443,26 +459,77 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
      */
     public void personFollowing(View view) {
         setContentView(R.layout.mode_person);
+
+        // Setup for the spinner
+        Spinner spinnerColor = (Spinner) findViewById(R.id.spinnerColor);
+        ArrayAdapter<String> spinnerAdapterColor = new ArrayAdapter<String>(DeviceControlActivity.this, android.R.layout.simple_spinner_item, colorArray);
+        spinnerAdapterColor.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerColor.setAdapter(spinnerAdapterColor);
+        spinnerColor.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                color = position;
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                color = 0;
+            }
+        });
     }
 
     public void scanPerson(View view) {
-        //TODO: send a string with a 2 and a 0 to let the Pi scan for persons
+        writeValue(2, color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
     }
 
     public void goFollowPerson(View view) {
-        //TODO: send a string with a 2 and 1 to start the person following
+        writeValue(2, color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+
         final Button goFollowPersonButton = findViewById(R.id.goFollowPerson);
         goFollowPersonButton.setBackgroundColor(Color.GREEN);
+        System.out.println("Car follows color: " + color);
+
     }
 
     public void stopFollowPerson(View view) {
-        // TODO: write a string with a 0 to the GoPiGo
+        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+
         final Button goFollowPersonButton = findViewById(R.id.goFollowPerson);
-        goFollowPersonButton.setBackgroundColor(Color.MAGENTA);
+        goFollowPersonButton.setBackgroundColor(Color.RED);
     }
 
     /**
      *  Methods for mode 3: car following
      */
+    public void carFollowing(View view) {
+        setContentView(R.layout.mode_car);
+    }
 
+    public void scanCar(View view) {
+        writeValue(3, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+    }
+
+    public void goFollowCar(View view) {
+        writeValue(4, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+
+        final Button goFollowPersonButton = findViewById(R.id.goFollowCar);
+        goFollowPersonButton.setBackgroundColor(Color.GREEN);
+    }
+
+    public void stopFollowCar(View view) {
+        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+
+        final Button goFollowPersonButton = findViewById(R.id.goFollowCar);
+        goFollowPersonButton.setBackgroundColor(Color.RED);
+    }
+
+    @Override
+    public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+
+    }
+
+    @Override
+    public void onNothingSelected(AdapterView<?> adapterView) {
+
+    }
 }
