@@ -103,3 +103,4 @@ GPG.set_speed(MAX_SPEED)
 xAccl = 0.0
 yAccl = 0.0
 zAccl = 0.0
+spatialVelocity = 0.0

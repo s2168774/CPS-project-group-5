@@ -99,8 +99,8 @@ def horizontalPositionControl_PID() :
 			# print("cfg.horizontal_Ki", cfg.horizontal_Ki, cfg.horizontal_integralError)
 
 			cfg.horizontal_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
-			print(" IN UTILS:: correction: ", cfg.horizontal_correction, "cfg.measurement: ", cfg.horizontal_measurement, "cfg.setpoint", cfg.horizontal_setpoint)
+			# print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
+			# print(" IN UTILS:: correction: ", cfg.horizontal_correction, "cfg.measurement: ", cfg.horizontal_measurement, "cfg.setpoint", cfg.horizontal_setpoint)
 			# make sure loop frequency is fairly constant
 			end = time()
 			delayDiff = end - start
