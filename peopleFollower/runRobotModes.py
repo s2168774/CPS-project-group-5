@@ -6,9 +6,6 @@ from threading import Thread
 
 import config as cfg
 
-
-
-
 def main() :
 	mode = 1# getBluetoothCommand()
 
@@ -23,7 +20,7 @@ def main() :
 	personFollowerThread = Thread()
 
 	lineFollower = LineFollower()
-	
+
 	while True : #not cfg.threadStopper.is_set() :
 	##
 	## SCAN FOR BLUETOOTH INPUT

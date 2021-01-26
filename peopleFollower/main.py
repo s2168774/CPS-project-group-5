@@ -9,7 +9,7 @@ programLoopThread = Thread(target= runRobotModes.main())
 
 # bluetoothThread(target=main())
 programLoopThread.start()
-ble_robot.main()
+# ble_robot.main()
 # bluetoothThread.start()
 
-print("after ble thread")
+# print("after ble thread")

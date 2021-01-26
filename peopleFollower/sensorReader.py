@@ -1,13 +1,23 @@
 import smbus
 import time
 import config as cfg
+import threading
 
-class sensorReader() :
+
+class SensorReader(threading.Thread) :
 	
-	def __init__() :
+	def __init__(self, probingFreq=100) :
+		self.probingFreq = probingFreq
+		threading.Thread.__init__(self)
+
+	def run(self) :
+		self.readIMUData(self.probingFreq)
+		# self.sensorThread(target=self.readIMUData, args=(probingFreq), deamon=True)
+		# self.sensorThread.start()
 
 
-	def readIMUData() :
+
+	def readIMUData(self, probingFreq) :
 		bus = smbus.SMBus(1)
 
 		#Test MMA8452Q address after connecting it with (it shows in the table):
@@ -33,20 +43,22 @@ class sensorReader() :
 			# MMA8452Q address, 0x1C(28)
 			# Read data back from 0x00(0), 7 bytes
 			# Status register, X-Axis MSB, X-Axis LSB, Y-Axis MSB, Y-Axis LSB, Z-Axis MSB, Z-Axis LSB
-			    data = bus.read_i2c_block_data(MMA8452Q, 0x00, 7)
+				data = bus.read_i2c_block_data(MMA8452Q, 0x00, 7)
 
 			# Convert the data
-			    cfg.xAccl = (data[1] * 256 + data[2]) / 16
-			    if cfg.xAccl > 2047 :
-			        cfg.xAccl -= 4096
+				cfg.xAccl = (data[1] * 256 + data[2]) / 16
+				if cfg.xAccl > 2047 :
+					cfg.xAccl -= 4096
 
-			    cfg.yAccl = (data[3] * 256 + data[4]) / 16
-			    if cfg.yAccl > 2047 :
-			        cfg.yAccl -= 4096
+				cfg.yAccl = (data[3] * 256 + data[4]) / 16
+				if cfg.yAccl > 2047 :
+					cfg.yAccl -= 4096
 
-			    cfg.zAccl = (data[5] * 256 + data[6]) / 16
-			    if cfg.zAccl > 2047 :
-			        cfg.zAccl -= 4096
+				cfg.zAccl = (data[5] * 256 + data[6]) / 16
+				if cfg.zAccl > 2047 :
+					cfg.zAccl -= 4096
+				time.sleep(1/probingFreq)
+				print("Acceleration in X-Axis ", cfg.xAccl)
 		except Exception as err:
 			print(str(err))
 			cfg.threadStopper.set()
@@ -54,6 +66,6 @@ class sensorReader() :
 			cfg.GPG.stop()
 
 		# Output data to screen
-		# print("Acceleration in X-Axis ", xAccl)
+		# print("Acceleration in X-Axis ", cfg.xAccl)
 		#print("Acceleration in Y-Axis : %d", yAccl)
 		#print("Acceleration in Z-Axis : %d", zAccl)
