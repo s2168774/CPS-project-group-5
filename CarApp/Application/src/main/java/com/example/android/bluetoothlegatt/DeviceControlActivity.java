@@ -194,8 +194,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
         colorArray.add("Pink");
         colorArray.add("Yellow");
         colorArray.add("Blue");
-        colorArray.add("Red");
-        colorArray.add("Marker");
+        colorArray.add("Purple");
 
     }
 
