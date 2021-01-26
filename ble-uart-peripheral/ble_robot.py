@@ -70,7 +70,7 @@ class ModeCharacteristic(Characteristic):
                                 ['write'], service)
 
     def WriteValue(self, value, options):
-        print('recieved mode: {}'.format(bytearray(value).hex()))
+        print('recieved mode: {}'.format(bytearray(value).decode()))
 
 class TargetCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
@@ -78,7 +78,7 @@ class TargetCharacteristic(Characteristic):
                                 ['write'], service)
 
     def WriteValue(self, value, options):
-        print('recieved target: {}'.format(bytearray(value).hex()))
+        print('recieved target: {}'.format(bytearray(value).decode()))
         
 class UartService(Service):
     def __init__(self, bus, index):
