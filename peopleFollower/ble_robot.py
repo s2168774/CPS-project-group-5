@@ -9,6 +9,7 @@ from example_gatt_server import Service, Characteristic
 from example_gatt_server import register_app_cb, register_app_error_cb
 from threading import Thread
 import time
+import runRobotModes
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
 DBUS_OM_IFACE =                'org.freedesktop.DBus.ObjectManager'
@@ -189,8 +190,8 @@ def main():
                                      reply_handler=register_ad_cb,
                                      error_handler=register_ad_error_cb)
 
-    # control_thread = Thread(target=run, daemon=True)
-    # control_thread.start()
+    control_thread = Thread(target=runRobotModes.main, daemon=True)
+    control_thread.start()
 
     try:
         mainloop.run()
