@@ -20,7 +20,7 @@ CONTROLLABLE_ROBOT_SERVICE_UUID = 'a7ead335-61e5-4d23-a4ce-bd0a956d5952'
 ROBOT_MODE_CHARACTERISTIC_UUID='1b4a5e34-54bf-4196-abe2-5dc7b590a415'
 TARGET_CHARACTERISTIC_UUID =   'db5e19fd-0800-4f27-bbf2-6e91ec9c37d2'
 
-LOCAL_NAME =                   'rpi-gatt-server-' + socket.gethostname()
+LOCAL_NAME =                   'control-gpg-' + socket.gethostname()
 mainloop = None
 
 class TxCharacteristic(Characteristic):
