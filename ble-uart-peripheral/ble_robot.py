@@ -7,6 +7,8 @@ from example_advertisement import Advertisement
 from example_advertisement import register_ad_cb, register_ad_error_cb
 from example_gatt_server import Service, Characteristic
 from example_gatt_server import register_app_cb, register_app_error_cb
+from threading import Thread
+import time
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
 DBUS_OM_IFACE =                'org.freedesktop.DBus.ObjectManager'
@@ -148,6 +150,13 @@ def find_adapter(bus):
         print('Skip adapter:', o)
     return None
 
+def run():
+    while True:
+        print("running...")
+        time.sleep(1)
+
+
+
 def main():
     global mainloop
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
@@ -176,6 +185,10 @@ def main():
     ad_manager.RegisterAdvertisement(adv.get_path(), {},
                                      reply_handler=register_ad_cb,
                                      error_handler=register_ad_error_cb)
+
+    control_thread = Thread(target=run, daemon=True)
+    control_thread.start()
+
     try:
         mainloop.run()
     except KeyboardInterrupt:
