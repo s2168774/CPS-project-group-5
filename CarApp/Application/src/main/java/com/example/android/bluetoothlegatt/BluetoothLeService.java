@@ -339,14 +339,14 @@ public class BluetoothLeService extends Service {
         BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(UUID.fromString("1b4a5e34-54bf-4196-abe2-5dc7b590a415"));
         mWriteCharacteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
         if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false) {
-            Log.w(TAG, "Failed to write characteristic");
+            Log.w(TAG, "Failed to write characteristic 1");
         }
 
         if (value == 1 || value == 2) {
             BluetoothGattCharacteristic mWriteCharacteristic2 = mCustomService.getCharacteristic(UUID.fromString("db5e19fd-0800-4f27-bbf2-6e91ec9c37d2"));
             mWriteCharacteristic2.setValue(value2, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
             if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic2) == false) {
-                Log.w(TAG, "Failed to write characteristic");
+                Log.w(TAG, "Failed to write characteristic 2");
             }
         }
     }
