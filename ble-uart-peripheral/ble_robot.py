@@ -63,7 +63,23 @@ class RxCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('remote: {}'.format(bytearray(value).decode()))
+        
+class ModeCharacteristic(Characteristic):
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(self, bus, index, ROBOT_MODE_CHARACTERISTIC_UUID,
+                                ['write'], service)
 
+    def WriteValue(self, value, options):
+        print('recieved mode: {}'.format(bytearray(value).decode()))
+
+class TargetCharacteristic(Characteristic):
+    def __init__(self, bus, index, service):
+        Characteristic.__init__(self, bus, index, TARGET_CHARACTERISTIC_UUID,
+                                ['write'], service)
+
+    def WriteValue(self, value, options):
+        print('recieved target: {}'.format(bytearray(value).decode()))
+        
 class UartService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, UART_SERVICE_UUID, True)
@@ -73,8 +89,8 @@ class UartService(Service):
 class RobotService(Service):
     def __init__(self, bus, index):
         Service.__init__(self, bus, index, CONTROLLABLE_ROBOT_SERVICE_UUID, True)
-        #self.add_characteristic(TxCharacteristic(bus, 0, self))
-        #self.add_characteristic(RxCharacteristic(bus, 1, self))
+        self.add_characteristic(ModeCharacteristic(bus, 0, self))
+        self.add_characteristic(TargetCharacteristic(bus, 1, self))
 
 class Application(dbus.service.Object):
     def __init__(self, bus):
