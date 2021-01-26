@@ -58,14 +58,14 @@ class LineFollower() :
 
 
 
-        def nothing(x):
-            pass
+        # def nothing(x):
+        #     pass
          
-        cv2.namedWindow("Trackbars")
+        # cv2.namedWindow("Trackbars")
          
-        cv2.createTrackbar("B", "Trackbars", 0, 255, nothing)
-        cv2.createTrackbar("G", "Trackbars", 0, 255, nothing)
-        cv2.createTrackbar("R", "Trackbars", 0, 255, nothing)
+        # cv2.createTrackbar("B", "Trackbars", 0, 255, nothing)
+        # cv2.createTrackbar("G", "Trackbars", 0, 255, nothing)
+        # cv2.createTrackbar("R", "Trackbars", 0, 255, nothing)
 
         #loop through frames continuously
         for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -85,10 +85,10 @@ class LineFollower() :
             # G = 10  #green 0..255
             # R = 200 #red 0..255
 
-            # Optional trackbars left for determining threshold 'live' if current is not working
-            B = cv2.getTrackbarPos("B", "Trackbars")
-            G = cv2.getTrackbarPos("G", "Trackbars")
-            R = cv2.getTrackbarPos("R", "Trackbars")
+            # # Optional trackbars left for determining threshold 'live' if current is not working
+            # B = cv2.getTrackbarPos("B", "Trackbars")
+            # G = cv2.getTrackbarPos("G", "Trackbars")
+            # R = cv2.getTrackbarPos("R", "Trackbars")
 
             
             
@@ -110,11 +110,11 @@ class LineFollower() :
             # pinkContoursSorted = getAreaSortedContours(maskPink)
             # yellowContoursSorted = getAreaSortedContours(maskYellow)
 
-            lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R, lowerSaturation=0, lowerValue=0, upperSaturation=255, upperValue=255)
+            # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R, lowerSaturation=0, lowerValue=0, upperSaturation=255, upperValue=255)
 
-            # maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
-            maskMarker = getFilteredColorMask(hsv, lowerLimitMarker, upperLimitMarker)
-            cv2.imshow("mask", maskMarker)
+            maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
+            # maskMarker = getFilteredColorMask(hsv, lowerLimitMarker, upperLimitMarker)
+            # cv2.imshow("mask", maskMarker)
             markerContoursSorted = getAreaSortedContours(maskSecond)
             markerBoundingBoxes = getBoundingBoxes(secondContoursSorted)
             drawBoxes(image, secondBoundingBoxes)

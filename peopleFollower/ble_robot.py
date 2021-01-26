@@ -150,19 +150,24 @@ def find_adapter(bus):
         print('Skip adapter:', o)
     return None
 
-def run():
-    while True:
-        print("running...")
-        time.sleep(1)
+# def run():
+#     while True:
+#         print("running...")
+#         time.sleep(1)
 
 def main():
     global mainloop
+
+    dbus.mainloop.glib.threads_init()
+
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()
     adapter = find_adapter(bus)
     if not adapter:
         print('BLE adapter not found')
         return
+
+
 
     service_manager = dbus.Interface(
                                 bus.get_object(BLUEZ_SERVICE_NAME, adapter),
@@ -184,8 +189,8 @@ def main():
                                      reply_handler=register_ad_cb,
                                      error_handler=register_ad_error_cb)
 
-    control_thread = Thread(target=run, daemon=True)
-    control_thread.start()
+    # control_thread = Thread(target=run, daemon=True)
+    # control_thread.start()
 
     try:
         mainloop.run()
