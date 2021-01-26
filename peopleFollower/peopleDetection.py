@@ -11,11 +11,11 @@ from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
 
-from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
+from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getHSVColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
 
 from centroidTracker import CentroidTracker
 from imutils.object_detection import non_max_suppression
-from wifiScanner import WifiScanner
+# from wifiScanner import WifiScanner
 ## TODO: 
 def personFollower() :
     # Initialize PiCamera
@@ -84,7 +84,7 @@ def personFollower() :
         # G = 10
         # R = 180
 
-        lowerLimit, upperLimit = getColorLimitsFromBGR(50, 10, 180)
+        lowerLimit, upperLimit = getHSVColorLimitsFromBGR(50, 10, 180)
 
         mask = getFilteredColorMask(hsv, lowerLimit, upperLimit)
 

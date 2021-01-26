@@ -160,16 +160,16 @@ def distanceControl_PID() :
 def cameraInit() :
     camera = PiCamera()
     camera.resolution = (cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT)
-    camera.framerate = 30
+    camera.framerate = 20
     camera.rotation = 180
     return camera
 
-def getColorLimitsFromBGR(blue, green, red) :
+def getHSVColorLimitsFromBGR(blue, green, red, lowerSaturation=100,  lowerValue=50, upperSaturation=255,  upperValue=255) :
 	        #Set limits for color filter
     color = np.uint8([[[blue, green, red]]])
     hsvColor = cv2.cvtColor(color,cv2.COLOR_BGR2HSV)
-    lowerLimit = np.uint8([hsvColor[0][0][0]-10, 100,50])
-    upperLimit = np.uint8([hsvColor[0][0][0]+10,255,255])
+    lowerLimit = np.uint8([hsvColor[0][0][0]-10, lowerSaturation,lowerValue])
+    upperLimit = np.uint8([hsvColor[0][0][0]+10, upperSaturation, upperValue])
     return lowerLimit, upperLimit
 
 def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit) :

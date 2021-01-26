@@ -1,12 +1,12 @@
 from threading import Thread, Event
-from utils import getColorLimitsFromBGR
+from utils import getHSVColorLimitsFromBGR
 from collections import OrderedDict
 import easygopigo3
 
 FRAME_WIDTH = 640
 FRAME_HEIGHT = 480
 
-MAX_SPEED = 200 #150
+MAX_SPEED = 400 #150
 
 # containers for moving average
 distanceMeasurements = []
@@ -50,16 +50,21 @@ distance_correction = 0.0
 color_PINK = 0 
 color_YELLOW = 1
 color_BLUE = 2
-color_RED = 3
+color_PURPLE = 3
+color_MARKER = 4
 
 ##
 ## Color limits BGR
 ##
 
-lowerLimitPink, upperLimitPink = getColorLimitsFromBGR(50, 10, 200)
-lowerLimitYellow, upperLimitYellow = getColorLimitsFromBGR(77, 147, 192)
-lowerLimitBlue, upperLimitBlue = getColorLimitsFromBGR(200, 0, 0)
-lowerLimitRed, upperLimitRed = getColorLimitsFromBGR(0, 0, 200)
+lowerLimitPink, upperLimitPink = getHSVColorLimitsFromBGR(50, 10, 200)
+lowerLimitYellow, upperLimitYellow = getHSVColorLimitsFromBGR(77, 147, 192)
+lowerLimitBlue, upperLimitBlue = getHSVColorLimitsFromBGR(180, 100, 0)
+lowerLimitPurple, upperLimitPurple = getHSVColorLimitsFromBGR(190, 90, 180)
+
+# lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(70,140,0, lowerSaturation=0, lowerValue=100, upperSaturation=255, upperValue=80)
+
+lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(70,140,0) ## GREEN
 
 class ColorLimitsDict() :
 	def __init__(self) :
@@ -67,7 +72,9 @@ class ColorLimitsDict() :
 		self.colorLimitsDict[color_PINK] = [lowerLimitPink, upperLimitPink]
 		self.colorLimitsDict[color_YELLOW] = [lowerLimitYellow, upperLimitYellow]
 		self.colorLimitsDict[color_BLUE] = [lowerLimitBlue, upperLimitBlue]
-		self.colorLimitsDict[color_RED] = [lowerLimitRed, upperLimitRed]
+		self.colorLimitsDict[color_PURPLE] = [lowerLimitPurple, upperLimitPurple]
+
+		self.colorLimitsDict[color_MARKER] = [lowerLimitMarker, upperLimitMarker]
 		
 	def upper(self, color) :
 		return self.colorLimitsDict[color][1]
@@ -93,6 +100,6 @@ GPG.set_speed(MAX_SPEED)
 ## Accelerometer data
 ##
 
-cfg.xAccl = 0.0
-cfg.yAccl = 0.0
-cfg.zAccl = 0.0
+xAccl = 0.0
+yAccl = 0.0
+zAccl = 0.0

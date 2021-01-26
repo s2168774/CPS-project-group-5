@@ -11,13 +11,11 @@ from threading import Thread
 from collections import OrderedDict
 from picamera.array import PiRGBArray
 
-from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
+from utils import findCameraDistance, horizontalPositionControl_PID, distanceControl_PID, findRssiDistance, rectArea, cameraInit, movingAverage, getHSVColorLimitsFromBGR, getFilteredColorMask, getAreaSortedContours, drawBoxes, getBoundingBoxes, drawObjectCoordinates, findCenterOfBiggestBox
 
 from centroidTracker import CentroidTracker
 
 from wifiScanner import WifiScanner
-
-
 
 class LineFollower() :
 
@@ -58,25 +56,16 @@ class LineFollower() :
 
         rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
 
-        # def nothing(x):
-        #     pass
-         
-        # cv2.namedWindow("Trackbars")
-         
-        # cv2.createTrackbar("B", "Trackbars", 0, 255, nothing)
-        # cv2.createTrackbar("G", "Trackbars", 0, 255, nothing)
-        # cv2.createTrackbar("R", "Trackbars", 0, 255, nothing)
-        # objectTrackers = []
-        # for x in range(4):
-        #     objectTrackers.append(CentroidTracker(maxDisappeared=5))
-        #     pass
 
-        # coloredObjects = OrderedDict()
-        # for x in range(4):
-        #     coloredObjects[x] = OrderedDict()
-        #     pass
-        # colorLimits = np.zeros((4, 3), dtype="uint8")
 
+        def nothing(x):
+            pass
+         
+        cv2.namedWindow("Trackbars")
+         
+        cv2.createTrackbar("B", "Trackbars", 0, 255, nothing)
+        cv2.createTrackbar("G", "Trackbars", 0, 255, nothing)
+        cv2.createTrackbar("R", "Trackbars", 0, 255, nothing)
 
         #loop through frames continuously
         for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -97,22 +86,50 @@ class LineFollower() :
             # R = 200 #red 0..255
 
             # Optional trackbars left for determining threshold 'live' if current is not working
-            # B = cv2.getTrackbarPos("B", "Trackbars")
-            # G = cv2.getTrackbarPos("G", "Trackbars")
-            # R = cv2.getTrackbarPos("R", "Trackbars")
-            # lowerLimitPink, upperLimitPink = getColorLimitsFromBGR(50, 10, 200)
-            # lowerLimitYellow, upperLimitYellow = getColorLimitsFromBGR(77, 147, 192)
+            B = cv2.getTrackbarPos("B", "Trackbars")
+            G = cv2.getTrackbarPos("G", "Trackbars")
+            R = cv2.getTrackbarPos("R", "Trackbars")
+
             
             
             maskFirst = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[0]), cfg.colorLimitsDict.upper(self.currentColors[0]))
+            firstContoursSorted = getAreaSortedContours(maskFirst)
+            firstBoundingBoxes = getBoundingBoxes(firstContoursSorted)
+            drawBoxes(image, firstBoundingBoxes)
+            firstColorObjects = firstColorTracker.update(firstBoundingBoxes)
+            drawObjectCoordinates(image, firstColorObjects)
+
             maskSecond = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[1]), cfg.colorLimitsDict.upper(self.currentColors[1]))
+            secondContoursSorted = getAreaSortedContours(maskSecond)
+            secondBoundingBoxes = getBoundingBoxes(secondContoursSorted)
+            drawBoxes(image, secondBoundingBoxes)
+            secondColorObjects = secondColorTracker.update(secondBoundingBoxes)
+            drawObjectCoordinates(image, secondColorObjects)
             # Apply Filters END
             # cv2.imshow("mask pink", maskFirst)
             # pinkContoursSorted = getAreaSortedContours(maskPink)
             # yellowContoursSorted = getAreaSortedContours(maskYellow)
 
-            firstContoursSorted = getAreaSortedContours(maskFirst)
-            secondContoursSorted = getAreaSortedContours(maskSecond)
+            lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R, lowerSaturation=0, lowerValue=0, upperSaturation=255, upperValue=255)
+
+            # maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
+            maskMarker = getFilteredColorMask(hsv, lowerLimitMarker, upperLimitMarker)
+            cv2.imshow("mask", maskMarker)
+            markerContoursSorted = getAreaSortedContours(maskSecond)
+            markerBoundingBoxes = getBoundingBoxes(secondContoursSorted)
+            drawBoxes(image, secondBoundingBoxes)
+
+            if len(markerBoundingBoxes) != 0 :
+                ## broadcast info that marker is reached
+                ## check if you received info from other cars that reached the intersection
+                ## compare speeds of cars and stop one of the cars
+                print("I AM ON INTERSECTION, WATCH OUT!")
+
+
+            # markerColorObjects = secondColorTracker.update(secondBoundingBoxes)
+            # drawObjectCoordinates(image, secondColorObjects)
+
+            
             # print("lineFollower.py: contours len: ", len(firstContoursSorted))
 
             # cv2.drawContours(image, firstContoursSorted, -1, (0, 255, 0), 3)
@@ -122,17 +139,16 @@ class LineFollower() :
 
             # pinkBoundingBoxes = getBoundingBoxes(pinkContoursSorted)
             # yellowBoundingBoxes = getBoundingBoxes(yellowContoursSorted)
-            firstBoundingBoxes = getBoundingBoxes(firstContoursSorted)
-            secondBoundingBoxes = getBoundingBoxes(secondContoursSorted)
-
-            drawBoxes(image, firstBoundingBoxes)
-            drawBoxes(image, secondBoundingBoxes)
-            firstColorObjects = firstColorTracker.update(firstBoundingBoxes)
-            secondColorObjects = secondColorTracker.update(secondBoundingBoxes)
+            
             
 
-            drawObjectCoordinates(image, firstColorObjects)
-            drawObjectCoordinates(image, secondColorObjects)
+            
+            
+            
+            
+            
+
+            
 
             #process pink Objects
             if bool(firstColorObjects) and bool(secondColorObjects) :
@@ -200,3 +216,7 @@ def main () :
 
 if __name__== "__main__":
     main()
+
+def findMarker() :
+
+    return True

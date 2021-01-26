@@ -2,7 +2,7 @@ import smbus
 import time
 import config as cfg
 
-class sensorReader
+class sensorReader() :
 	
 	def __init__() :
 
@@ -52,3 +52,8 @@ class sensorReader
 			cfg.threadStopper.set()
 		finally:
 			cfg.GPG.stop()
+
+		# Output data to screen
+		# print("Acceleration in X-Axis ", xAccl)
+		#print("Acceleration in Y-Axis : %d", yAccl)
+		#print("Acceleration in Z-Axis : %d", zAccl)
