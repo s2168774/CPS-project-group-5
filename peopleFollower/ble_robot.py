@@ -74,8 +74,9 @@ class ModeCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved mode: {}'.format(value))
+        print("before: ", cfg.mode)
         cfg.mode=int(value[0])
-
+        print("after: ", cfg.mode)
 class TargetCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(self, bus, index, TARGET_CHARACTERISTIC_UUID,

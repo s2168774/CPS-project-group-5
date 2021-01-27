@@ -26,9 +26,9 @@ def main() :
 	## SCAN FOR BLUETOOTH INPUT
 	##
 		# mode = cfg.mode
-		print("mode: ", mode)
+		# print("mode: ", mode)
 
-		if mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
+		if cfg.mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
 			myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
 			print("START line following")
 			cfg.horizontal_loopFreq = 11
@@ -40,7 +40,7 @@ def main() :
 			cfg.GPG.set_speed(cfg.MAX_SPEED)
 			lineFollowerThread(target=lineFollower.run(myPath))
 			lineFollowerThread.start()
-		elif mode == MODE_PERSON_FOLLOWER and not isPeopleDetectionRunning:
+		elif cfg.mode == MODE_PERSON_FOLLOWER and not isPeopleDetectionRunning:
 			print("START following person")
 			# parameters of the PID controller
 			isPeopleDetectionRunning = True
@@ -56,13 +56,13 @@ def main() :
 			cfg.GPG.set_speed(cfg.MAX_SPEED)
 			personFollowerThread(target=personFollower())
 			personFollowerThread.start()
-		elif mode == STOP_CURRENT_MODE:
+		elif cfg.mode == STOP_CURRENT_MODE:
 			cfg.threadStopper.set()
 			isLineFollowerRunning = False
 			isPeopleDetectionRunning = False
 			personFollowerThread.join()
 			lineFollowerThread.join()
-		elif mode == MODE_EXIT:
+		elif cfg.mode == MODE_EXIT:
 			cfg.threadStopper.set()
 			if personFollowerThread.is_alive() :
 				personFollowerThread.join()
