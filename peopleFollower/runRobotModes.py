@@ -7,7 +7,7 @@ from threading import Thread
 import config as cfg
 
 def main() :
-	mode = cfg.mode #get data set by BLE layer
+	# mode = cfg.mode #get data set by BLE layer
 
 	isLineFollowerRunning = False
 	isPeopleDetectionRunning = False
@@ -25,7 +25,8 @@ def main() :
 	##
 	## SCAN FOR BLUETOOTH INPUT
 	##
-        mode = cfg.mode
+		# mode = cfg.mode
+		print("mode: ", mode)
 
 		if mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
 			myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
@@ -67,13 +68,12 @@ def main() :
 				personFollowerThread.join()
 			if lineFollowerThread.is_alive() :
 				lineFollowerThread.join()
-			if bluetoothThread.is_alive() :
-				bluetoothThread.join()
 			break;
 		else :
-			print("Avilable modes:")
-			print("\tLINE FOLLOWER (MODE_LINE_FOLLOWER = 0")
-			print("\tLINE FOLLOWER (MODE_PERSON_FOLLOWER = 1")
+			pass
+			# print("Avilable modes:")
+			# print("\tLINE FOLLOWER (MODE_LINE_FOLLOWER = 0")
+			# print("\tLINE FOLLOWER (MODE_PERSON_FOLLOWER = 1")
 
 if __name__ == '__main__':
     main()

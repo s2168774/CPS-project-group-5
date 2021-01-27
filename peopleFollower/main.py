@@ -1,5 +1,6 @@
 import ble_robot
 import runRobotModes
+import config as cfg
 from threading import Thread
 
 from multiprocessing import Process
@@ -21,7 +22,12 @@ try:
 	bleProcess.start()
 	# ble_robot.main()
 	# bluetoothThread.start()
+	while not cfg.threadStopper.is_set():
+		if cfg.threadStopper.is_set():
+			print("joining main threads")
 
+	programLoopThread.join()
+	bleProcess.join()
 	# print("after ble thread")
 	pass
 except Exception as e:
@@ -31,7 +37,6 @@ except Exception as e:
 	raise
 	pass
 finally:
-
 	pass
 
 # bluetoothThread(target=main())

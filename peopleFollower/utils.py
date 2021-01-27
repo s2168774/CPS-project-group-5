@@ -215,7 +215,7 @@ def getBoundingBoxes(contours) :
 			# return non_max_suppression(rects, probs=None, overlapThresh=0.45)
 			return rects
 	else :
-		print("No contours found...")
+		# print("No contours found...")
 		return []
 
 def drawObjectCoordinates(image, objects) :

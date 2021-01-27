@@ -26,9 +26,9 @@ class LineFollower() :
         self.step = 0
         self.path = []
         self.isNextStep = False
-        self.isNearCrossroads = True
+        self.isNearCrossroads = False
         self.markerPresentFrameCount = 0
-        self.markerPresentFrameLimit = 7
+        self.markerPresentFrameLimit = 3
         self.sensorReader = sensorReader.SensorReader(probingFreq=100)
 
     def updateStep(self) :
@@ -78,6 +78,8 @@ class LineFollower() :
         for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
             image = frame.array
             startTime = time.time()
+            
+            print(cfg.mode)
 
             blurred = cv2.GaussianBlur(image, (5, 5), 0)
             hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV) # convert picture
@@ -111,63 +113,64 @@ class LineFollower() :
 
             # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R)
 
-            # # maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
+            maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
             # maskMarker = getFilteredColorMask(hsv, lowerLimitMarker, upperLimitMarker)
-            # cv2.imshow("mask", maskMarker)
-            # markerContoursSorted = getAreaSortedContours(maskMarker)
-            # markerBoundingBoxes = getBoundingBoxes(markerContoursSorted)
-            # drawBoxes(image, markerBoundingBoxes)
+            cv2.imshow("mask", maskMarker)
+            markerContoursSorted = getAreaSortedContours(maskMarker)
+            markerBoundingBoxes = getBoundingBoxes(markerContoursSorted)
+            drawBoxes(image, markerBoundingBoxes)
 
 
-            # if len(markerBoundingBoxes) != 0 :
-            #     self.markerPresentFrameCount += 1
+            if len(markerBoundingBoxes) != 0 :
+                self.markerPresentFrameCount += 1
 
-            #     if self. markerPresentFrameCount >= self.markerPresentFrameLimit :
-            #         self.isNearCrossroads = True
+                if self. markerPresentFrameCount >= self.markerPresentFrameLimit :
+                    self.isNearCrossroads = True
+                    cfg.GPG.stop()
 
             #     ## broadcast info that marker is reached
             #     ## check if you received info from other cars that reached the intersection
             #     ## compare speeds of cars and stop one of the cars
             #     print("I AM ON INTERSECTION, WATCH OUT!")
+            if not self.isNearCrossroads :
+                if bool(firstColorObjects) and bool(secondColorObjects) :
+                    if not self.isNextStep :
+                        self.isNextStep = self.updateStep()
+                        _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
+                        cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
+                    else:
+                        _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
+                        cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
+                    
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED / 2) + int(cfg.horizontal_correction))
+                 
+                    # print("Both colors detected!!")
 
-            if bool(firstColorObjects) and bool(secondColorObjects) :
-                if not self.isNextStep :
-                    self.isNextStep = self.updateStep()
-                    _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
-                    cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
-                else:
+                elif bool(firstColorObjects) and not bool(secondColorObjects) :
+                    if self.isNextStep :
+                        self.isNextStep = False
                     _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
-                    cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
-                
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED / 2) + int(cfg.horizontal_correction))
-             
-                # print("Both colors detected!!")
-
-            elif bool(firstColorObjects) and not bool(secondColorObjects) :
-                if self.isNextStep :
-                    self.isNextStep = False
-                _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
-                cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
-            elif bool(secondColorObjects) :
-                _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
-                cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
-                
-            elif not bool(firstColorObjects) and not bool(secondColorObjects) :
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=1)
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=1)
-                print("STOP!")
+                    cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
+                elif bool(secondColorObjects) :
+                    _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
+                    cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
+                    
+                elif not bool(firstColorObjects) and not bool(secondColorObjects) :
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=1)
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=1)
+                    # print("STOP!")
             
             # print("distance correction: ", cfg.distance_correction)
             # print("horizontal_correction: ", cfg.horizontal_correction)
 
             cv2.imshow("outputImage", image)
             endTime = time.time()
-            print("loopTime: ", endTime - startTime)
+            # print("loopTime: ", endTime - startTime)
             # Exit if 'esc' is clicked
             # cleanup hardware
             key = cv2.waitKey(1)

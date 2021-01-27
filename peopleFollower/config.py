@@ -109,5 +109,5 @@ spatialVelocity = 0.0
 ## Control variables from BLE phone commands
 ##
 
-mode = 0
+mode = 1
 target = 0
