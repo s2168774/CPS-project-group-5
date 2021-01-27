@@ -358,13 +358,13 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
 
     // When switching between modes:
     public void returnMenu(View view) {
-        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
         setContentView(R.layout.main_menu);
     }
 
-    public void writeValue(int value, int destination, String uuid) {
+    public void writeValue(int value, String uuid, String characterstic) {
         if(mBluetoothLeService != null) {
-            mBluetoothLeService.writeCustomCharacteristic(value, destination, uuid);
+            mBluetoothLeService.writeCustomCharacteristic(value, uuid, characterstic);
         }
     }
 
@@ -419,15 +419,20 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
 
         final Button goToStationButton = findViewById(R.id.goToStation);
 
-        writeValue(1, destination, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(1, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        writeValue(destination, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "db5e19fd-0800-4f27-bbf2-6e91ec9c37d2");
 
         goToStationButton.setBackgroundColor(Color.GREEN);
         System.out.println("Car goes to station: " + destination);
     }
 
     public void stopCar(View view) {
-        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
-
+        writeValue(0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
         final Button goToStationButton = findViewById(R.id.goToStation);
         goToStationButton.setBackgroundColor(Color.RED);
         System.out.println("All orders are cancelled!");
@@ -479,11 +484,23 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     }
 
     public void scanPerson(View view) {
-        writeValue(2, color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(2, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        writeValue(color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "db5e19fd-0800-4f27-bbf2-6e91ec9c37d2");
     }
 
     public void goFollowPerson(View view) {
-        writeValue(2, color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(2, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        writeValue(color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "db5e19fd-0800-4f27-bbf2-6e91ec9c37d2");
 
         final Button goFollowPersonButton = findViewById(R.id.goFollowPerson);
         goFollowPersonButton.setBackgroundColor(Color.GREEN);
@@ -492,7 +509,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     }
 
     public void stopFollowPerson(View view) {
-        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
 
         final Button goFollowPersonButton = findViewById(R.id.goFollowPerson);
         goFollowPersonButton.setBackgroundColor(Color.RED);
@@ -506,18 +523,30 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
     }
 
     public void scanCar(View view) {
-        writeValue(3, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(3, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        writeValue(color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "db5e19fd-0800-4f27-bbf2-6e91ec9c37d2");
     }
 
     public void goFollowCar(View view) {
-        writeValue(4, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(4, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        writeValue(color, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "db5e19fd-0800-4f27-bbf2-6e91ec9c37d2");
 
         final Button goFollowPersonButton = findViewById(R.id.goFollowCar);
         goFollowPersonButton.setBackgroundColor(Color.GREEN);
     }
 
     public void stopFollowCar(View view) {
-        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
+        writeValue(0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952", "1b4a5e34-54bf-4196-abe2-5dc7b590a415");
 
         final Button goFollowPersonButton = findViewById(R.id.goFollowCar);
         goFollowPersonButton.setBackgroundColor(Color.RED);
