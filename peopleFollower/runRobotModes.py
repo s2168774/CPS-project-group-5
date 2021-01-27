@@ -7,7 +7,7 @@ from threading import Thread
 import config as cfg
 
 def main() :
-	mode = 1# getBluetoothCommand()
+	mode = cfg.mode #get data set by BLE layer
 
 	isLineFollowerRunning = False
 	isPeopleDetectionRunning = False
@@ -25,6 +25,8 @@ def main() :
 	##
 	## SCAN FOR BLUETOOTH INPUT
 	##
+        mode = cfg.mode
+
 		if mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
 			myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
 			print("START line following")

@@ -104,3 +104,10 @@ xAccl = 0.0
 yAccl = 0.0
 zAccl = 0.0
 spatialVelocity = 0.0
+
+##
+## Control variables from BLE phone commands
+##
+
+mode = 0
+target = 0
