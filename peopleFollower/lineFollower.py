@@ -44,6 +44,9 @@ class LineFollower() :
     def run(self, path=[cfg.color_PINK, cfg.color_YELLOW]) :
         self.path = path
         self.currentColors = path[:2]
+        # print("path: ", path)
+        # print("###############################")
+
         # Initialize PiCamera
         camera = cameraInit()
 
@@ -62,8 +65,8 @@ class LineFollower() :
         rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
 
         self.sensorReader.start()
-        # def nothing(x):
-        #     pass
+        def nothing(x):
+            pass
          
         # cv2.namedWindow("Trackbars")
          
@@ -79,51 +82,53 @@ class LineFollower() :
             blurred = cv2.GaussianBlur(image, (5, 5), 0)
             hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV) # convert picture
 
-
+             # blurred = cv2.GaussianBlur(image, (1, 1), 0)
+            # hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert picture
             # B = 50  #blue 0..255
             # G = 10  #green 0..255
             # R = 200 #red 0..255
 
-            # # Optional trackbars left for determining threshold 'live' if current is not working
+            # Optional trackbars left for determining threshold 'live' if current is not working
             # B = cv2.getTrackbarPos("B", "Trackbars")
             # G = cv2.getTrackbarPos("G", "Trackbars")
             # R = cv2.getTrackbarPos("R", "Trackbars")
 
             
             
-            maskFirst = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[0]), cfg.colorLimitsDict.upper(self.currentColors[0]))
+            maskFirst = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[0]), cfg.colorLimitsDict.upper(self.currentColors[0]), useMorphology=False)
             firstContoursSorted = getAreaSortedContours(maskFirst)
             firstBoundingBoxes = getBoundingBoxes(firstContoursSorted)
             drawBoxes(image, firstBoundingBoxes)
             firstColorObjects = firstColorTracker.update(firstBoundingBoxes)
             drawObjectCoordinates(image, firstColorObjects)
 
-            maskSecond = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[1]), cfg.colorLimitsDict.upper(self.currentColors[1]))
+            maskSecond = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[1]), cfg.colorLimitsDict.upper(self.currentColors[1]), useMorphology=False)
             secondContoursSorted = getAreaSortedContours(maskSecond)
             secondBoundingBoxes = getBoundingBoxes(secondContoursSorted)
             drawBoxes(image, secondBoundingBoxes)
             secondColorObjects = secondColorTracker.update(secondBoundingBoxes)
-            drawObjectCoordinates(image, secondColorObjects)
+            # drawObjectCoordinates(image, secondColorObjects)
 
-            # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R, lowerSaturation=0, lowerValue=0, upperSaturation=255, upperValue=255)
+            # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R)
 
-            maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
+            # # maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
             # maskMarker = getFilteredColorMask(hsv, lowerLimitMarker, upperLimitMarker)
             # cv2.imshow("mask", maskMarker)
-            markerContoursSorted = getAreaSortedContours(maskSecond)
-            markerBoundingBoxes = getBoundingBoxes(secondContoursSorted)
-            drawBoxes(image, secondBoundingBoxes)
+            # markerContoursSorted = getAreaSortedContours(maskMarker)
+            # markerBoundingBoxes = getBoundingBoxes(markerContoursSorted)
+            # drawBoxes(image, markerBoundingBoxes)
 
-            if len(markerBoundingBoxes) != 0 :
-                self.markerPresentFrameCount += 1
 
-                if self. markerPresentFrameCount >= self.markerPresentFrameLimit :
-                    self.isNearCrossroads = True
+            # if len(markerBoundingBoxes) != 0 :
+            #     self.markerPresentFrameCount += 1
 
-                ## broadcast info that marker is reached
-                ## check if you received info from other cars that reached the intersection
-                ## compare speeds of cars and stop one of the cars
-                print("I AM ON INTERSECTION, WATCH OUT!")
+            #     if self. markerPresentFrameCount >= self.markerPresentFrameLimit :
+            #         self.isNearCrossroads = True
+
+            #     ## broadcast info that marker is reached
+            #     ## check if you received info from other cars that reached the intersection
+            #     ## compare speeds of cars and stop one of the cars
+            #     print("I AM ON INTERSECTION, WATCH OUT!")
 
             if bool(firstColorObjects) and bool(secondColorObjects) :
                 if not self.isNextStep :
@@ -137,7 +142,7 @@ class LineFollower() :
                 cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
                 cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED / 2) + int(cfg.horizontal_correction))
              
-                print("Both colors detected!!")
+                # print("Both colors detected!!")
 
             elif bool(firstColorObjects) and not bool(secondColorObjects) :
                 if self.isNextStep :

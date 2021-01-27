@@ -113,7 +113,7 @@ class SensorReader(threading.Thread) :
 			# print("Acceleration in X-Axis : ", cfg.xAccl, "before calibration: ", xAccl, " : ", xTiltCompensation)
 			# print("Acceleration in Y-Axis : ", cfg.yAccl, "before calibration: ", yAccl)
 			# print("Acceleration in Z-Axis : ", cfg.zAccl, "before calibration: ", zAccl)
-			print("spatialVelocity : ", cfg.spatialVelocity)
+			# print("spatialVelocity : ", cfg.spatialVelocity)
 		# # except Exception as err:
 		# 	print(str(err))
 		# 	cfg.threadStopper.set()

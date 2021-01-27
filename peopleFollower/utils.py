@@ -172,11 +172,12 @@ def getHSVColorLimitsFromBGR(blue, green, red, lowerSaturation=100,  lowerValue=
     upperLimit = np.uint8([hsvColor[0][0][0]+10, upperSaturation, upperValue])
     return lowerLimit, upperLimit
 
-def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit) :
-    kernel = np.ones((4,4),np.uint8)
+def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit, useMorphology=True) :
     mask = cv2.inRange(hsvImage, lowerColorLimit, upperColorLimit)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    if useMorphology :
+	    kernel = np.ones((4,4),np.uint8)
+	    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+	    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     return mask
 
 def getAreaSortedContours(mask) :

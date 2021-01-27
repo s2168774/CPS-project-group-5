@@ -57,10 +57,10 @@ color_MARKER = 4
 ## Color limits BGR
 ##
 
-lowerLimitPink, upperLimitPink = getHSVColorLimitsFromBGR(50, 10, 200)
+lowerLimitPink, upperLimitPink = getHSVColorLimitsFromBGR(66, 56, 199)
 lowerLimitYellow, upperLimitYellow = getHSVColorLimitsFromBGR(77, 147, 192)
 lowerLimitBlue, upperLimitBlue = getHSVColorLimitsFromBGR(180, 100, 0)
-lowerLimitPurple, upperLimitPurple = getHSVColorLimitsFromBGR(190, 90, 180)
+lowerLimitPurple, upperLimitPurple = getHSVColorLimitsFromBGR(37, 0, 28)
 
 # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(70,140,0, lowerSaturation=0, lowerValue=100, upperSaturation=255, upperValue=80)
 

@@ -26,11 +26,11 @@ def main() :
 	## SCAN FOR BLUETOOTH INPUT
 	##
 		if mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
-			myPath = [cfg.color_PINK, cfg.color_YELLOW, cfg.color_PINK, cfg.color_YELLOW, cfg.color_PINK]
+			myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
 			print("START line following")
-			cfg.horizontal_loopFreq = 8
+			cfg.horizontal_loopFreq = 11
 			cfg.MAX_SPEED = 150
-			cfg.horizontal_Kp =0.15 #0.23
+			cfg.horizontal_Kp =0.2 #0.23
 			cfg.horizontal_Kd = 0.3#12.0
 			cfg.horizontal_Ki = 0.0001#0.000022
 			isLineFollowerRunning=True
