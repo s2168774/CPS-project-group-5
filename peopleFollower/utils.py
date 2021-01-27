@@ -99,8 +99,8 @@ def horizontalPositionControl_PID() :
 			# print("cfg.horizontal_Ki", cfg.horizontal_Ki, cfg.horizontal_integralError)
 
 			cfg.horizontal_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
-			print(" IN UTILS:: correction: ", cfg.horizontal_correction, "cfg.measurement: ", cfg.horizontal_measurement, "cfg.setpoint", cfg.horizontal_setpoint)
+			# print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
+			# print(" IN UTILS:: correction: ", cfg.horizontal_correction, "cfg.measurement: ", cfg.horizontal_measurement, "cfg.setpoint", cfg.horizontal_setpoint)
 			# make sure loop frequency is fairly constant
 			end = time()
 			delayDiff = end - start
@@ -172,11 +172,12 @@ def getHSVColorLimitsFromBGR(blue, green, red, lowerSaturation=100,  lowerValue=
     upperLimit = np.uint8([hsvColor[0][0][0]+10, upperSaturation, upperValue])
     return lowerLimit, upperLimit
 
-def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit) :
-    kernel = np.ones((4,4),np.uint8)
+def getFilteredColorMask(hsvImage, lowerColorLimit ,upperColorLimit, useMorphology=True) :
     mask = cv2.inRange(hsvImage, lowerColorLimit, upperColorLimit)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
-    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    if useMorphology :
+	    kernel = np.ones((4,4),np.uint8)
+	    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+	    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
     return mask
 
 def getAreaSortedContours(mask) :
@@ -214,7 +215,7 @@ def getBoundingBoxes(contours) :
 			# return non_max_suppression(rects, probs=None, overlapThresh=0.45)
 			return rects
 	else :
-		print("No contours found...")
+		# print("No contours found...")
 		return []
 
 def drawObjectCoordinates(image, objects) :

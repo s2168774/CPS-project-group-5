@@ -52,7 +52,6 @@ def personFollower() :
     # deviceScanner = ble.DeviceScanner(scanDelegate)
     # # deviceScanner.startScan(float("inf"))
     # deviceScanner.showAvilableDevices(scanDelegate)
-    # # TODO get values from scanner thread
 
     # wifiScanner = WifiScanner()
 

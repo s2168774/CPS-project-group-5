@@ -10,6 +10,7 @@ from example_gatt_server import register_app_cb, register_app_error_cb
 from threading import Thread
 import time
 import runRobotModes
+import config as cfg
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
 DBUS_OM_IFACE =                'org.freedesktop.DBus.ObjectManager'
@@ -74,7 +75,9 @@ class ModeCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved mode: {}'.format(value))
-
+        print("before: ", cfg.mode)
+        cfg.mode=int(value[0])
+        print("after: ", cfg.mode)
 class TargetCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(self, bus, index, TARGET_CHARACTERISTIC_UUID,
@@ -82,6 +85,7 @@ class TargetCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved target: {}'.format(value))
+        cfg.target=int(value[0])
         
 class UartService(Service):
     def __init__(self, bus, index):

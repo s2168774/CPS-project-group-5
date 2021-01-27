@@ -6,11 +6,8 @@ from threading import Thread
 
 import config as cfg
 
-
-
-
 def main() :
-	mode = 1# getBluetoothCommand()
+	# mode = cfg.mode #get data set by BLE layer
 
 	isLineFollowerRunning = False
 	isPeopleDetectionRunning = False
@@ -23,24 +20,27 @@ def main() :
 	personFollowerThread = Thread()
 
 	lineFollower = LineFollower()
-	
+
 	while True : #not cfg.threadStopper.is_set() :
 	##
 	## SCAN FOR BLUETOOTH INPUT
 	##
-		if mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
-			myPath = [cfg.color_PINK, cfg.color_YELLOW, cfg.color_PINK, cfg.color_YELLOW, cfg.color_PINK]
+		# mode = cfg.mode
+		# print("mode: ", mode)
+
+		if cfg.mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
+			myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
 			print("START line following")
-			cfg.horizontal_loopFreq = 8
+			cfg.horizontal_loopFreq = 11
 			cfg.MAX_SPEED = 150
-			cfg.horizontal_Kp =0.15 #0.23
+			cfg.horizontal_Kp =0.2 #0.23
 			cfg.horizontal_Kd = 0.3#12.0
 			cfg.horizontal_Ki = 0.0001#0.000022
 			isLineFollowerRunning=True
 			cfg.GPG.set_speed(cfg.MAX_SPEED)
 			lineFollowerThread(target=lineFollower.run(myPath))
 			lineFollowerThread.start()
-		elif mode == MODE_PERSON_FOLLOWER and not isPeopleDetectionRunning:
+		elif cfg.mode == MODE_PERSON_FOLLOWER and not isPeopleDetectionRunning:
 			print("START following person")
 			# parameters of the PID controller
 			isPeopleDetectionRunning = True
@@ -56,25 +56,24 @@ def main() :
 			cfg.GPG.set_speed(cfg.MAX_SPEED)
 			personFollowerThread(target=personFollower())
 			personFollowerThread.start()
-		elif mode == STOP_CURRENT_MODE:
+		elif cfg.mode == STOP_CURRENT_MODE:
 			cfg.threadStopper.set()
 			isLineFollowerRunning = False
 			isPeopleDetectionRunning = False
 			personFollowerThread.join()
 			lineFollowerThread.join()
-		elif mode == MODE_EXIT:
+		elif cfg.mode == MODE_EXIT:
 			cfg.threadStopper.set()
 			if personFollowerThread.is_alive() :
 				personFollowerThread.join()
 			if lineFollowerThread.is_alive() :
 				lineFollowerThread.join()
-			if bluetoothThread.is_alive() :
-				bluetoothThread.join()
 			break;
 		else :
-			print("Avilable modes:")
-			print("\tLINE FOLLOWER (MODE_LINE_FOLLOWER = 0")
-			print("\tLINE FOLLOWER (MODE_PERSON_FOLLOWER = 1")
+			pass
+			# print("Avilable modes:")
+			# print("\tLINE FOLLOWER (MODE_LINE_FOLLOWER = 0")
+			# print("\tLINE FOLLOWER (MODE_PERSON_FOLLOWER = 1")
 
 if __name__ == '__main__':
     main()

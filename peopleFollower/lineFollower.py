@@ -5,6 +5,7 @@ import time
 import easygopigo3
 import config as cfg
 import bleScanner as ble
+import sensorReader
 
 # from bleCommunication.bleScanner import DeviceScanner
 from threading import Thread
@@ -25,6 +26,10 @@ class LineFollower() :
         self.step = 0
         self.path = []
         self.isNextStep = False
+        self.isNearCrossroads = False
+        self.markerPresentFrameCount = 0
+        self.markerPresentFrameLimit = 3
+        self.sensorReader = sensorReader.SensorReader(probingFreq=100)
 
     def updateStep(self) :
         print("len(self.path:", len(self.path))
@@ -39,6 +44,9 @@ class LineFollower() :
     def run(self, path=[cfg.color_PINK, cfg.color_YELLOW]) :
         self.path = path
         self.currentColors = path[:2]
+        # print("path: ", path)
+        # print("###############################")
+
         # Initialize PiCamera
         camera = cameraInit()
 
@@ -56,10 +64,9 @@ class LineFollower() :
 
         rawCapture = PiRGBArray(camera, size=(cfg.FRAME_WIDTH, cfg.FRAME_HEIGHT))
 
-
-
-        # def nothing(x):
-        #     pass
+        self.sensorReader.start()
+        def nothing(x):
+            pass
          
         # cv2.namedWindow("Trackbars")
          
@@ -71,130 +78,99 @@ class LineFollower() :
         for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
             image = frame.array
             startTime = time.time()
+            
+            print(cfg.mode)
 
             blurred = cv2.GaussianBlur(image, (5, 5), 0)
-            hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV) # convert picture from BGR to HSV color format
-            # hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert picture 
+            hsv = cv2.cvtColor(blurred, cv2.COLOR_BGR2HSV) # convert picture
 
-            # for i in range(len(coloredObjects)):
-            #     coloredObjects[self.currentColors[i]] = objectTrackers[self.currentColors[i]].update()
-                # find pink line
-
-
+             # blurred = cv2.GaussianBlur(image, (1, 1), 0)
+            # hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV) # convert picture
             # B = 50  #blue 0..255
             # G = 10  #green 0..255
             # R = 200 #red 0..255
 
-            # # Optional trackbars left for determining threshold 'live' if current is not working
+            # Optional trackbars left for determining threshold 'live' if current is not working
             # B = cv2.getTrackbarPos("B", "Trackbars")
             # G = cv2.getTrackbarPos("G", "Trackbars")
             # R = cv2.getTrackbarPos("R", "Trackbars")
 
             
             
-            maskFirst = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[0]), cfg.colorLimitsDict.upper(self.currentColors[0]))
+            maskFirst = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[0]), cfg.colorLimitsDict.upper(self.currentColors[0]), useMorphology=False)
             firstContoursSorted = getAreaSortedContours(maskFirst)
             firstBoundingBoxes = getBoundingBoxes(firstContoursSorted)
             drawBoxes(image, firstBoundingBoxes)
             firstColorObjects = firstColorTracker.update(firstBoundingBoxes)
             drawObjectCoordinates(image, firstColorObjects)
 
-            maskSecond = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[1]), cfg.colorLimitsDict.upper(self.currentColors[1]))
+            maskSecond = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(self.currentColors[1]), cfg.colorLimitsDict.upper(self.currentColors[1]), useMorphology=False)
             secondContoursSorted = getAreaSortedContours(maskSecond)
             secondBoundingBoxes = getBoundingBoxes(secondContoursSorted)
             drawBoxes(image, secondBoundingBoxes)
             secondColorObjects = secondColorTracker.update(secondBoundingBoxes)
-            drawObjectCoordinates(image, secondColorObjects)
-            # Apply Filters END
-            # cv2.imshow("mask pink", maskFirst)
-            # pinkContoursSorted = getAreaSortedContours(maskPink)
-            # yellowContoursSorted = getAreaSortedContours(maskYellow)
+            # drawObjectCoordinates(image, secondColorObjects)
 
-            # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R, lowerSaturation=0, lowerValue=0, upperSaturation=255, upperValue=255)
+            # lowerLimitMarker, upperLimitMarker = getHSVColorLimitsFromBGR(B,G,R)
 
             maskMarker = getFilteredColorMask(hsv, cfg.colorLimitsDict.lower(cfg.color_MARKER), cfg.colorLimitsDict.upper(cfg.color_MARKER))
             # maskMarker = getFilteredColorMask(hsv, lowerLimitMarker, upperLimitMarker)
-            # cv2.imshow("mask", maskMarker)
-            markerContoursSorted = getAreaSortedContours(maskSecond)
-            markerBoundingBoxes = getBoundingBoxes(secondContoursSorted)
-            drawBoxes(image, secondBoundingBoxes)
+            cv2.imshow("mask", maskMarker)
+            markerContoursSorted = getAreaSortedContours(maskMarker)
+            markerBoundingBoxes = getBoundingBoxes(markerContoursSorted)
+            drawBoxes(image, markerBoundingBoxes)
+
 
             if len(markerBoundingBoxes) != 0 :
-                ## broadcast info that marker is reached
-                ## check if you received info from other cars that reached the intersection
-                ## compare speeds of cars and stop one of the cars
-                print("I AM ON INTERSECTION, WATCH OUT!")
+                self.markerPresentFrameCount += 1
 
+                if self. markerPresentFrameCount >= self.markerPresentFrameLimit :
+                    self.isNearCrossroads = True
+                    cfg.GPG.stop()
 
-            # markerColorObjects = secondColorTracker.update(secondBoundingBoxes)
-            # drawObjectCoordinates(image, secondColorObjects)
+            #     ## broadcast info that marker is reached
+            #     ## check if you received info from other cars that reached the intersection
+            #     ## compare speeds of cars and stop one of the cars
+            #     print("I AM ON INTERSECTION, WATCH OUT!")
+            if not self.isNearCrossroads :
+                if bool(firstColorObjects) and bool(secondColorObjects) :
+                    if not self.isNextStep :
+                        self.isNextStep = self.updateStep()
+                        _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
+                        cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
+                    else:
+                        _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
+                        cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
+                    
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED / 2) + int(cfg.horizontal_correction))
+                 
+                    # print("Both colors detected!!")
 
-            
-            # print("lineFollower.py: contours len: ", len(firstContoursSorted))
-
-            # cv2.drawContours(image, firstContoursSorted, -1, (0, 255, 0), 3)
-            # cv2.imshow("with contours", image)
-
-            # cv2.imshow("contours pink", firstContoursSorted)
-
-            # pinkBoundingBoxes = getBoundingBoxes(pinkContoursSorted)
-            # yellowBoundingBoxes = getBoundingBoxes(yellowContoursSorted)
-            
-            
-
-            
-            
-            
-            
-            
-
-            
-
-            #process pink Objects
-            if bool(firstColorObjects) and bool(secondColorObjects) :
-                if not self.isNextStep :
-                    self.isNextStep = self.updateStep()
-                    _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
-                    cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
-                else:
+                elif bool(firstColorObjects) and not bool(secondColorObjects) :
+                    if self.isNextStep :
+                        self.isNextStep = False
                     _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
-                    cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal 
-                
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=int(cfg.MAX_SPEED /2) - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=int(cfg.MAX_SPEED / 2) + int(cfg.horizontal_correction))
-             
-                print("Both colors detected!!")
-
-            elif bool(firstColorObjects) and not bool(secondColorObjects) :
-                if self.isNextStep :
-                    self.isNextStep = False
-                _, firstColorCenterX = findCenterOfBiggestBox(firstColorObjects)
-                cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
-            # elif bool(firstColorObjects) and bool(secondColorObjects) :
-            #     self.step += 1
-            #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=0)
-            #     cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=0)
-            #     print("STOP!")
-            elif bool(secondColorObjects) :
-                _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
-                cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
-                
-            elif not bool(firstColorObjects) and not bool(secondColorObjects) :
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=1)
-                cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=1)
-                print("STOP!")
+                    cfg.horizontal_measurement = movingAverage(firstColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
+                elif bool(secondColorObjects) :
+                    _, secondColorCenterX = findCenterOfBiggestBox(secondColorObjects)
+                    cfg.horizontal_measurement = movingAverage(secondColorCenterX, cfg.horizontalPositions, windowSize=2) # horizontal position 
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=cfg.MAX_SPEED - int(cfg.horizontal_correction))
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=cfg.MAX_SPEED + int(cfg.horizontal_correction))
+                    
+                elif not bool(firstColorObjects) and not bool(secondColorObjects) :
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_LEFT, dps=1)
+                    cfg.GPG.set_motor_dps(cfg.GPG.MOTOR_RIGHT, dps=1)
+                    # print("STOP!")
             
             # print("distance correction: ", cfg.distance_correction)
             # print("horizontal_correction: ", cfg.horizontal_correction)
 
-                # ###### HANDLE ROBOT MOVEMENT_ END #####
             cv2.imshow("outputImage", image)
             endTime = time.time()
-            print("loopTime: ", endTime - startTime)
+            # print("loopTime: ", endTime - startTime)
             # Exit if 'esc' is clicked
             # cleanup hardware
             key = cv2.waitKey(1)
@@ -211,12 +187,13 @@ class LineFollower() :
 
         cv2.destroyAllWindows()
 
+def findMarker() :
+
+    return True
+
 def main () :
     lineFollower()
 
 if __name__== "__main__":
     main()
 
-def findMarker() :
-
-    return True
