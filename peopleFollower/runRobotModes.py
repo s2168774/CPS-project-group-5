@@ -71,12 +71,12 @@ def update():
 def main() :
     setup()
 
-	while True : #not cfg.threadStopper.is_set() :
-	##
-	## SCAN FOR BLUETOOTH INPUT
-	##
-		# mode = cfg.mode
-		# print("mode: ", mode)
+    while True : #not cfg.threadStopper.is_set() :
+    ##
+    ## SCAN FOR BLUETOOTH INPUT
+    ##
+        # mode = cfg.mode
+        # print("mode: ", mode)
         update()
 
 		
