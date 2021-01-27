@@ -6,20 +6,17 @@ from threading import Thread
 
 import config as cfg
 
-def setup()
-    # mode = cfg.mode #get data set by BLE layer
+isLineFollowerRunning = False
+isPeopleDetectionRunning = False
+MODE_EXIT = 0
+MODE_LINE_FOLLOWER = 1
+MODE_PERSON_FOLLOWER = 2
+STOP_CURRENT_MODE = 3
 
-	isLineFollowerRunning = False
-	isPeopleDetectionRunning = False
-	MODE_EXIT = 0
-	MODE_LINE_FOLLOWER = 1
-	MODE_PERSON_FOLLOWER = 2
-	STOP_CURRENT_MODE = 3
+lineFollowerThread = Thread()
+personFollowerThread = Thread()
 
-	lineFollowerThread = Thread()
-	personFollowerThread = Thread()
-
-	lineFollower = LineFollower()
+lineFollower = LineFollower()
 
 def update():
     if cfg.mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
@@ -64,10 +61,11 @@ def update():
             lineFollowerThread.join()
         break;
     else :
-        pass
+        return false
         # print("Avilable modes:")
         # print("\tLINE FOLLOWER (MODE_LINE_FOLLOWER = 0")
         # print("\tLINE FOLLOWER (MODE_PERSON_FOLLOWER = 1")
+    return true
 
 
 def main() :
