@@ -74,7 +74,7 @@ class ModeCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved mode: {}'.format(value))
-        cfg.mode=value[0]
+        cfg.mode=int(value[0])
 
 class TargetCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
@@ -83,7 +83,7 @@ class TargetCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved target: {}'.format(value))
-        cfg.target=value[0]
+        cfg.target=int(value[0])
         
 class UartService(Service):
     def __init__(self, bus, index):
