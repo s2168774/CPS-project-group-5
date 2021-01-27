@@ -19,7 +19,8 @@ personFollowerThread = Thread()
 lineFollower = LineFollower()
 
 def update():
-    if cfg.mode == MODE_LINE_FOLLOWER and not isLineFollowerRunning :
+    global isLineFollowerRunning, isPeopleDetectionRunning
+    if cfg.mode == MODE_LINE_FOLLOWER and (not isLineFollowerRunning) :
         myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
         print("START line following")
         cfg.horizontal_loopFreq = 11
@@ -59,7 +60,7 @@ def update():
             personFollowerThread.join()
         if lineFollowerThread.is_alive() :
             lineFollowerThread.join()
-        break;
+        return false
     else :
         return false
         # print("Avilable modes:")
@@ -69,7 +70,6 @@ def update():
 
 
 def main() :
-    setup()
 
     while True : #not cfg.threadStopper.is_set() :
     ##
