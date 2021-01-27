@@ -155,11 +155,6 @@ def find_adapter(bus):
         print('Skip adapter:', o)
     return None
 
-# def run():
-#     while True:
-#         print("running...")
-#         time.sleep(1)
-
 def main():
     global mainloop
 
@@ -180,8 +175,6 @@ def main():
     ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
                                 LE_ADVERTISING_MANAGER_IFACE)
 
-    #app = UartApplication(bus)
-    #adv = UartAdvertisement(bus, 0)
     app = RobotApplication(bus)
     adv = RobotAdvertisement(bus, 0)
 
