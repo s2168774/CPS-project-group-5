@@ -13,14 +13,14 @@ from multiprocessing import Process
 #     p.start()
 #     p.join()
 # bluetoothThread = Thread(target=ble_robot.main())
-# bleProcess = Process(target=ble_robot.main)
+bleProcess = Process(target=ble_robot.main)
 programLoopThread = Thread(target= runRobotModes.main)
 
 try:
 	# bluetoothThread(target=main())
 	programLoopThread.start()
-	# bleProcess.start()
-	ble_robot.main()
+	bleProcess.start()
+	#ble_robot.main()
 	# ble_robot.main()
 	# bluetoothThread.start()
 	while not cfg.threadStopper.is_set():
@@ -28,13 +28,13 @@ try:
 			print("joining main threads")
 
 	programLoopThread.join()
-	# bleProcess.join()
+	bleProcess.join()
 	# print("after ble thread")
 	pass
 except Exception as e:
 	print(str(e))
 	programLoopThread.join()
-	# bleProcess.join()
+	bleProcess.join()
 	raise
 	pass
 finally:
