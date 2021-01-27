@@ -358,6 +358,7 @@ public class DeviceControlActivity extends Activity implements AdapterView.OnIte
 
     // When switching between modes:
     public void returnMenu(View view) {
+        writeValue(0, 0, "a7ead335-61e5-4d23-a4ce-bd0a956d5952");
         setContentView(R.layout.main_menu);
     }
 
