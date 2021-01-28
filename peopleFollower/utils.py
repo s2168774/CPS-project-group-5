@@ -78,30 +78,24 @@ def horizontalPositionControl_PID() :
 		while not cfg.threadStopper.is_set() :
 			start = time()
 
-			error = cfg.horizontal_setpoint - cfg.horizontal_measurement #calculating current error
-			# print("cfg.horizontal_setpoint", cfg.horizontal_setpoint, "cfg.horizontal_measurement", cfg.horizontal_measurement)
+			error = cfg.horizontal_setpoint - cfg.horizontal_measurement 
 
-			proportional_output = cfg.horizontal_Kp * error #Output of proportional controller
+			proportional_output = cfg.horizontal_Kp * error
 
-			diff_error = (error-cfg.horizontal_previousError) #dividing by timestep is not necessary since this can be compensated for by tuning Kd 
+			diff_error = (error-cfg.horizontal_previousError)
 			cfg.horizontal_previousError = error
-			# print("error: ", error, "preverror: ", cfg.horizontal_previousError)
 
-			diff_output = cfg.horizontal_Kd * diff_error #output of differential controller
-			# print("cfg.horizontal_Kd: ", cfg.horizontal_Kd, "diff_error: ", diff_error)
+
+			diff_output = cfg.horizontal_Kd * diff_error
 
 			if cfg.horizontal_Ki < 0.00001 and cfg.horizontal_Ki > -0.00001 :
 				cfg.horizontal_integralError = 0.0 #calculating the integral, again timestep is not necessary
 			else :
 				cfg.horizontal_integralError += error
 
-			integral_output = cfg.horizontal_Ki * cfg.horizontal_integralError  #integral controller output
-			# print("cfg.horizontal_Ki", cfg.horizontal_Ki, cfg.horizontal_integralError)
+			integral_output = cfg.horizontal_Ki * cfg.horizontal_integralError
 
 			cfg.horizontal_correction = proportional_output + diff_output + integral_output #check if the output needs to be negative or not
-			# print("proportional out: %.3f, differential out: %.3f, integral out: %.3f" % (proportional_output, diff_output, integral_output))
-			# print(" IN UTILS:: correction: ", cfg.horizontal_correction, "cfg.measurement: ", cfg.horizontal_measurement, "cfg.setpoint", cfg.horizontal_setpoint)
-			# make sure loop frequency is fairly constant
 			end = time()
 			delayDiff = end - start
 			if loopPeriod - delayDiff > 0 :

@@ -65,10 +65,6 @@ class SensorReader(threading.Thread) :
 			if zAccl > 2047 :
 				zAccl -= 4096
 
-			# print("Acceleration in X-Axis : ", xAccl)
-			# print("Acceleration in Y-Axis : ", yAccl)
-			# print("Acceleration in Z-Axis : ", zAccl)
-
 			xCalibrationValues.append(xAccl)
 			yCalibrationValues.append(yAccl)
 			zCalibrationValues.append(zAccl)
@@ -78,15 +74,9 @@ class SensorReader(threading.Thread) :
 		xTiltCompensation = np.average(xCalibrationValues)
 		yTiltCompensation = np.average(yCalibrationValues)
 		zTiltCompensation = np.average(zCalibrationValues)
-		# print("Tilt in X-Axis : ", xTiltCompensation)
-		# print("Tilt in Y-Axis : ", yTiltCompensation)
-		# print("Tilt in Z-Axis : ", zTiltCompensation)
 
 		# try :
 		while not cfg.threadStopper.is_set() :
-		# MMA8452Q address, 0x1C(28)
-		# Read data back from 0x00(0), 7 bytes
-		# Status register, X-Axis MSB, X-Axis LSB, Y-Axis MSB, Y-Axis LSB, Z-Axis MSB, Z-Axis LSB
 			data = bus.read_i2c_block_data(MMA8452Q, 0x00, 7)
 
 		# Convert the data
@@ -109,18 +99,3 @@ class SensorReader(threading.Thread) :
 
 			spatialAccel = math.sqrt(math.pow(cfg.zAccl, 2.0) + math.pow(cfg.xAccl, 2.0))
 			cfg.spatialVelocity += (1/probingFreq) * spatialAccel
-			# time.sleep(1/probingFreq)		
-			# print("Acceleration in X-Axis : ", cfg.xAccl, "before calibration: ", xAccl, " : ", xTiltCompensation)
-			# print("Acceleration in Y-Axis : ", cfg.yAccl, "before calibration: ", yAccl)
-			# print("Acceleration in Z-Axis : ", cfg.zAccl, "before calibration: ", zAccl)
-			# print("spatialVelocity : ", cfg.spatialVelocity)
-		# # except Exception as err:
-		# 	print(str(err))
-		# 	cfg.threadStopper.set()
-		# finally:
-		# 	cfg.GPG.stop()
-
-		# Output data to screen
-		# print("Acceleration in X-Axis ", cfg.xAccl)
-		#print("Acceleration in Y-Axis : %d", yAccl)
-		#print("Acceleration in Z-Axis : %d", zAccl)

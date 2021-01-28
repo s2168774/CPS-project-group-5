@@ -21,13 +21,13 @@ lineFollower = LineFollower()
 def update():
     global isLineFollowerRunning, isPeopleDetectionRunning
     if cfg.mode == MODE_LINE_FOLLOWER and (not isLineFollowerRunning) :
-        myPath = [cfg.color_PURPLE, cfg.color_YELLOW]
+        myPath = [cfg.color_PURPLE, cfg.color_BLUE, cfg.color_YELLOW, cfg.color_BLUE, cfg.color_PINK, cfg.color_BLUE, cfg.color_YELLOW, cfg.color_BLUE, cfg.color_PINK]
         print("START line following")
         cfg.horizontal_loopFreq = 11
-        cfg.MAX_SPEED = 150
-        cfg.horizontal_Kp =0.2 #0.23
+        cfg.MAX_SPEED = 80
+        cfg.horizontal_Kp =0.15 #0.23
         cfg.horizontal_Kd = 0.3#12.0
-        cfg.horizontal_Ki = 0.0001#0.000022
+        cfg.horizontal_Ki = 0.0#001#0.000022
         isLineFollowerRunning=True
         cfg.GPG.set_speed(cfg.MAX_SPEED)
         lineFollowerThread(target=lineFollower.run(myPath))
@@ -63,20 +63,12 @@ def update():
         return false
     else :
         return false
-        # print("Avilable modes:")
-        # print("\tLINE FOLLOWER (MODE_LINE_FOLLOWER = 0")
-        # print("\tLINE FOLLOWER (MODE_PERSON_FOLLOWER = 1")
     return true
 
 
 def main() :
 
     while True : #not cfg.threadStopper.is_set() :
-    ##
-    ## SCAN FOR BLUETOOTH INPUT
-    ##
-        # mode = cfg.mode
-        # print("mode: ", mode)
         update()
 
 		
