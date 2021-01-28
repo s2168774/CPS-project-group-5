@@ -9,6 +9,8 @@ from example_gatt_server import Service, Characteristic
 from example_gatt_server import register_app_cb, register_app_error_cb
 from threading import Thread
 import time
+import config as cfg
+import runRobotModes 
 
 BLUEZ_SERVICE_NAME =           'org.bluez'
 DBUS_OM_IFACE =                'org.freedesktop.DBus.ObjectManager'
@@ -73,7 +75,9 @@ class ModeCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved mode: {}'.format(value))
-
+        print("before: ", cfg.mode)
+        cfg.mode=int(value[0])
+        print("after: ", cfg.mode)
 class TargetCharacteristic(Characteristic):
     def __init__(self, bus, index, service):
         Characteristic.__init__(self, bus, index, TARGET_CHARACTERISTIC_UUID,
@@ -81,6 +85,7 @@ class TargetCharacteristic(Characteristic):
 
     def WriteValue(self, value, options):
         print('recieved target: {}'.format(value))
+        cfg.target=int(value[0])
         
 class UartService(Service):
     def __init__(self, bus, index):
@@ -150,13 +155,11 @@ def find_adapter(bus):
         print('Skip adapter:', o)
     return None
 
-def run():
-    while True:
-        print("running...")
-        time.sleep(1)
-
 def main():
     global mainloop
+
+    dbus.mainloop.glib.threads_init()
+
     dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
     bus = dbus.SystemBus()
     adapter = find_adapter(bus)
@@ -164,14 +167,14 @@ def main():
         print('BLE adapter not found')
         return
 
+
+
     service_manager = dbus.Interface(
                                 bus.get_object(BLUEZ_SERVICE_NAME, adapter),
                                 GATT_MANAGER_IFACE)
     ad_manager = dbus.Interface(bus.get_object(BLUEZ_SERVICE_NAME, adapter),
                                 LE_ADVERTISING_MANAGER_IFACE)
 
-    #app = UartApplication(bus)
-    #adv = UartAdvertisement(bus, 0)
     app = RobotApplication(bus)
     adv = RobotAdvertisement(bus, 0)
 
@@ -184,8 +187,7 @@ def main():
                                      reply_handler=register_ad_cb,
                                      error_handler=register_ad_error_cb)
 
-    control_thread = Thread(target=run, daemon=True)
-    control_thread.start()
+    GLib.idle_add(runRobotModes.update)
 
     try:
         mainloop.run()

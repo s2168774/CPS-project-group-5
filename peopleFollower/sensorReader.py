@@ -1,14 +1,27 @@
 import smbus
 import time
 import config as cfg
+import math
+import threading
+import numpy as np
+from utils import movingAverage
 
-class sensorReader
+
+class SensorReader(threading.Thread) :
 	
-	def __init__() :
+	def __init__(self, probingFreq=100) :
+		self.probingFreq = probingFreq
+		threading.Thread.__init__(self)
+
+	def run(self) :
+		self.readIMUData(self.probingFreq)
+		# self.sensorThread(target=self.readIMUData, args=(probingFreq), deamon=True)
+		# self.sensorThread.start()
 
 
-	def readIMUData() :
+	def readIMUData(self, probingFreq) :
 		bus = smbus.SMBus(1)
+
 
 		#Test MMA8452Q address after connecting it with (it shows in the table):
 		#sudo i2cdetect -y 1
@@ -27,28 +40,62 @@ class sensorReader
 		#       0x00(00)    Set range to +/- 2g
 		bus.write_byte_data(MMA8452Q, 0x0E, 0x00)
 		time.sleep(0.1)
+		xAccelerationMeasurementsArray = []
+		zAccelerationMeasurementsArray = []
+		xTiltCompensation = 0.0
+		yTiltCompensation = 0.0
+		zTiltCompensation = 0.0
 
-		try :
-			while not cfg.threadStopper.is_set() :
-			# MMA8452Q address, 0x1C(28)
-			# Read data back from 0x00(0), 7 bytes
-			# Status register, X-Axis MSB, X-Axis LSB, Y-Axis MSB, Y-Axis LSB, Z-Axis MSB, Z-Axis LSB
-			    data = bus.read_i2c_block_data(MMA8452Q, 0x00, 7)
+		xCalibrationValues = []
+		yCalibrationValues = []
+		zCalibrationValues = []
+		i = 0
+		# calibration
+		while len(xCalibrationValues) < 300 :
+			data = bus.read_i2c_block_data(MMA8452Q, 0x00, 7)
+			xAccl = (data[1] * 256 + data[2]) / 16
+			if xAccl > 2047 :
+				xAccl -= 4096
 
-			# Convert the data
-			    cfg.xAccl = (data[1] * 256 + data[2]) / 16
-			    if cfg.xAccl > 2047 :
-			        cfg.xAccl -= 4096
+			yAccl = (data[3] * 256 + data[4]) / 16
+			if yAccl > 2047 :
+				yAccl -= 4096
 
-			    cfg.yAccl = (data[3] * 256 + data[4]) / 16
-			    if cfg.yAccl > 2047 :
-			        cfg.yAccl -= 4096
+			zAccl = (data[5] * 256 + data[6]) / 16
+			if zAccl > 2047 :
+				zAccl -= 4096
 
-			    cfg.zAccl = (data[5] * 256 + data[6]) / 16
-			    if cfg.zAccl > 2047 :
-			        cfg.zAccl -= 4096
-		except Exception as err:
-			print(str(err))
-			cfg.threadStopper.set()
-		finally:
-			cfg.GPG.stop()
+			xCalibrationValues.append(xAccl)
+			yCalibrationValues.append(yAccl)
+			zCalibrationValues.append(zAccl)
+			i += 1
+			print(i)
+
+		xTiltCompensation = np.average(xCalibrationValues)
+		yTiltCompensation = np.average(yCalibrationValues)
+		zTiltCompensation = np.average(zCalibrationValues)
+
+		# try :
+		while not cfg.threadStopper.is_set() :
+			data = bus.read_i2c_block_data(MMA8452Q, 0x00, 7)
+
+		# Convert the data
+			xAccl = (data[1] * 256 + data[2]) / 16
+			if xAccl > 2047 :
+				xAccl -= 4096
+
+			yAccl = (data[3] * 256 + data[4]) / 16
+			if yAccl > 2047 :
+				yAccl -= 4096
+
+			zAccl = (data[5] * 256 + data[6]) / 16
+			if zAccl > 2047 :
+				zAccl -= 4096
+
+			# cfg.xAccl = movingAverage(xAccl, xAccelerationMeasurementsArray, windowSize=20) - xTiltCompensation
+			# cfg.zAccl = movingAverage(zAccl, xAccelerationMeasurementsArray, windowSize=20) - zTiltCompensation
+			cfg.xAccl = xAccl - xTiltCompensation
+			cfg.zAccl = zAccl - zTiltCompensation
+
+			spatialAccel = math.sqrt(math.pow(cfg.zAccl, 2.0) + math.pow(cfg.xAccl, 2.0))
+			cfg.spatialVelocity += (1/probingFreq) * spatialAccel
