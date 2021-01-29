@@ -240,6 +240,7 @@ public class BluetoothLeService extends Service {
         }
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
+        // BluetoothDevice.TRANSPORT_LE was added to prevent the function from timing out and returning status 133.
         mBluetoothGatt = device.connectGatt(this, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
@@ -323,6 +324,12 @@ public class BluetoothLeService extends Service {
         return mBluetoothGatt.getServices();
     }
 
+    /**
+     * A custom function that was implemented to send information to the GoPiGo
+     * @param value is the value that is written to the characteristic.
+     * @param uuid is the code of the service that is used for.
+     * @param characteristic is the code of the characteristic that is changed to "value".
+     */
     public void writeCustomCharacteristic(int value, String uuid, String characteristic) {
         if (mBluetoothAdapter == null || mBluetoothGatt == null) {
             Log.w(TAG, "BluetoothAdapter or BluetoothGatt not initialized");
