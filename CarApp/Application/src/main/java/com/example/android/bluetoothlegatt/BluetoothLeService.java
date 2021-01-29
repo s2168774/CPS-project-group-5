@@ -29,8 +29,10 @@ import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.ParcelUuid;
+import android.support.annotation.RequiresApi;
 import android.util.Log;
 
 import java.util.List;
@@ -212,6 +214,7 @@ public class BluetoothLeService extends Service {
      *         {@code BluetoothGattCallback#onConnectionStateChange(android.bluetooth.BluetoothGatt, int, int)}
      *         callback.
      */
+    @RequiresApi(api = Build.VERSION_CODES.M)
     public boolean connect(final String address) {
         if (mBluetoothAdapter == null || address == null) {
             Log.w(TAG, "BluetoothAdapter not initialized or unspecified address.");
@@ -237,7 +240,8 @@ public class BluetoothLeService extends Service {
         }
         // We want to directly connect to the device, so we are setting the autoConnect
         // parameter to false.
-        mBluetoothGatt = device.connectGatt(this, false, mGattCallback);
+        // BluetoothDevice.TRANSPORT_LE was added to prevent the function from timing out and returning status 133.
+        mBluetoothGatt = device.connectGatt(this, false, mGattCallback, BluetoothDevice.TRANSPORT_LE);
         Log.d(TAG, "Trying to create a new connection.");
         mBluetoothDeviceAddress = address;
         mConnectionState = STATE_CONNECTING;
@@ -318,5 +322,39 @@ public class BluetoothLeService extends Service {
         if (mBluetoothGatt == null) return null;
 
         return mBluetoothGatt.getServices();
+    }
+
+    /**
+     * A custom function that was implemented to send information to the GoPiGo
+     * @param value is the value that is written to the characteristic.
+     * @param uuid is the code of the service that is used for.
+     * @param characteristic is the code of the characteristic that is changed to "value".
+     */
+    public void writeCustomCharacteristic(int value, String uuid, String characteristic) {
+        if (mBluetoothAdapter == null || mBluetoothGatt == null) {
+            Log.w(TAG, "BluetoothAdapter or BluetoothGatt not initialized");
+            return;
+        }
+
+        BluetoothGattService mCustomService = mBluetoothGatt.getService(UUID.fromString(uuid));
+
+        if (mCustomService == null) {
+            Log.w(TAG, "Custom BLE Service not found");
+            return;
+        }
+
+        BluetoothGattCharacteristic mWriteCharacteristic = mCustomService.getCharacteristic(UUID.fromString(characteristic));
+        mWriteCharacteristic.setValue(value, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+        if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic) == false) {
+            Log.w(TAG, "Failed to write characteristic 1");
+        }
+
+//        if (value == 1 || value == 2) {
+//            BluetoothGattCharacteristic mWriteCharacteristic2 = mCustomService.getCharacteristic(UUID.fromString("db5e19fd-0800-4f27-bbf2-6e91ec9c37d2"));
+//            mWriteCharacteristic2.setValue(value2, BluetoothGattCharacteristic.FORMAT_UINT8, 0);
+//            if (mBluetoothGatt.writeCharacteristic(mWriteCharacteristic2) == false) {
+//                Log.w(TAG, "Failed to write characteristic 2");
+//            }
+//        }
     }
 }
